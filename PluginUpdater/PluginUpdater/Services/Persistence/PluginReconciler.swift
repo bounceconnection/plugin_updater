@@ -30,6 +30,20 @@ actor PluginReconciler {
     /// Detects new, updated, removed, and reappeared plugins in a single pass.
     /// Set `fullScan` to false for incremental scans so unseen plugins are not marked as removed.
     func reconcile(scannedPlugins: [PluginMetadata], fullScan: Bool = true) throws -> ReconciliationResult {
+        // Deduplicate by bundleIdentifier — when the same plugin exists in both
+        // system and user directories, keep the one with the newer version
+        var dedupedByID: [String: PluginMetadata] = [:]
+        for metadata in scannedPlugins {
+            if let existing = dedupedByID[metadata.bundleIdentifier] {
+                if metadata.version.isNewerVersion(than: existing.version) {
+                    dedupedByID[metadata.bundleIdentifier] = metadata
+                }
+            } else {
+                dedupedByID[metadata.bundleIdentifier] = metadata
+            }
+        }
+        let uniquePlugins = Array(dedupedByID.values)
+
         // Fetch all existing plugins
         let descriptor = FetchDescriptor<Plugin>()
         let existingPlugins = try modelContext.fetch(descriptor)
@@ -54,7 +68,7 @@ actor PluginReconciler {
         var unchangedCount = 0
         var changes: [PluginChange] = []
 
-        for metadata in scannedPlugins {
+        for metadata in uniquePlugins {
             seenBundleIDs.insert(metadata.bundleIdentifier)
 
             if let existing = existingByBundleID[metadata.bundleIdentifier] {
@@ -98,7 +112,7 @@ actor PluginReconciler {
             updatedPlugins: updatedCount,
             removedPlugins: removedCount,
             unchangedPlugins: unchangedCount,
-            totalProcessed: scannedPlugins.count,
+            totalProcessed: uniquePlugins.count,
             changes: changes
         )
     }

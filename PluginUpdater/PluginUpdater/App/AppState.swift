@@ -10,14 +10,29 @@ final class AppState {
     var recentChanges: [String] = []
     var scanProgress: Double = 0
     var errorMessage: String?
+    var manifestEntries: [String: UpdateManifestEntry] = [:]
 
     private(set) var modelContainer: ModelContainer
     private var fileMonitor: FileSystemMonitor?
     private var isScanInProgress = false
+    private let manifestManager = ManifestManager()
 
     init(modelContainer: ModelContainer) {
         self.modelContainer = modelContainer
         self.lastScanDate = UserDefaults.standard.object(forKey: Constants.UserDefaultsKeys.lastScanDate) as? Date
+    }
+
+    // MARK: - Manifest
+
+    func loadManifest() async {
+        await manifestManager.loadBundledManifest()
+
+        let remoteURL = UserDefaults.standard.string(forKey: Constants.UserDefaultsKeys.manifestURL) ?? ""
+        if !remoteURL.isEmpty {
+            await manifestManager.fetchRemote(from: remoteURL)
+        }
+
+        manifestEntries = await manifestManager.allEntries()
     }
 
     // MARK: - Full Scan
@@ -53,6 +68,11 @@ final class AppState {
             scanProgress = 1.0
             applyResult(result, errors: scanResult.errors)
 
+            // Send notifications (skip first scan — too noisy)
+            if lastScanDate != nil {
+                NotificationManager.shared.notifyChanges(result.changes)
+            }
+
             // Start monitoring after first successful scan
             startMonitoring(directories: directories)
         } catch {
@@ -78,6 +98,9 @@ final class AppState {
             let result = try await reconciler.reconcile(scannedPlugins: scanResult.plugins, fullScan: false)
 
             applyResult(result, errors: scanResult.errors)
+
+            // Notify for incremental changes
+            NotificationManager.shared.notifyChanges(result.changes)
         } catch {
             // Silently ignore incremental scan failures
         }
