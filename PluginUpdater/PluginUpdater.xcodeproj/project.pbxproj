@@ -1,0 +1,587 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0D301D58EFA2BE8EE6C3DCF5 /* UpdateManifestTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A837F2C3F147FE3B2378743E /* UpdateManifestTests.swift */; };
+		1426A98A13DBF5C5D184993D /* VendorResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA3A07860952E18E0DEC046B /* VendorResolver.swift */; };
+		2399380FC71A4C0E4A1393F6 /* BundleMetadataExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 197B81B66CD75BA67B4741F0 /* BundleMetadataExtractor.swift */; };
+		2638FD8F14CECB04E4FA2257 /* VendorInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 613B2B7BA5C37C8E758A0BF9 /* VendorInfo.swift */; };
+		2EF730C86C416F28B22BEC98 /* PluginVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BC4908F51CDC729F0645FC6 /* PluginVersion.swift */; };
+		300120473D5D58C1510785F3 /* PersistenceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8507964F3E9247BFC5BB580 /* PersistenceController.swift */; };
+		3B77607C97AEA365C179293C /* PluginFormatTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02063DE3C8D3333A309332EC /* PluginFormatTests.swift */; };
+		424E33F6164C2AC0F13DC754 /* PluginScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0075A029C426D72E02843DB /* PluginScanner.swift */; };
+		5EC118195278CECA9A597B86 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC93F8EF57BA9A0FD9879280 /* AppState.swift */; };
+		77E5B68EC2A706F54DBE4439 /* URL+PluginBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 151EB46EC83CDD51442D51E8 /* URL+PluginBundle.swift */; };
+		846D8655E139B8D9B814B8DE /* Plugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BC8E0BFE748332634B82821 /* Plugin.swift */; };
+		898EF245015E10839D80C33D /* PluginModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8A56CA68C718D6EB1FD50D7 /* PluginModelTests.swift */; };
+		9E34A902CB91B58410878005 /* PluginFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50B2F733E2F4A6FA4BFC9282 /* PluginFormat.swift */; };
+		B6220976895AFAD7563D0C4F /* URLExtensionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CE6380DB266015098CA2F47 /* URLExtensionTests.swift */; };
+		BB685A85A17B33B5B7F744F2 /* String+Version.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F8EF8565B79D25D4658BE /* String+Version.swift */; };
+		C226CFE3B3914AF892FB57AA /* ScanLocationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EDFCF45CB9FA3E07DE63CF5 /* ScanLocationTests.swift */; };
+		C5B8D7AF3420606D0EC80F93 /* PluginReconcilerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A598E6367944C87FE41AEE0 /* PluginReconcilerTests.swift */; };
+		D584995C9E4B2B57E7AB34D1 /* VersionParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F4E2D6328514A432E594F40 /* VersionParserTests.swift */; };
+		D9D1FC24E55250860FF6AA5D /* PersistenceControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F4C374ECB160B55AF5974F3 /* PersistenceControllerTests.swift */; };
+		DE50686CF90D72FE5067B057 /* PluginReconciler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48945FF5154578D9FA574F84 /* PluginReconciler.swift */; };
+		E36F62F52B778306706E170D /* PluginUpdaterApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE5E64D484AEBF8F443CC747 /* PluginUpdaterApp.swift */; };
+		ECA8707A7773A23B9E80059F /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E9D30986AADC09D953814BE /* Constants.swift */; };
+		F1190AAC2028E4067E12D151 /* ScanLocation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A588CB8DFDCA92B11B7ECDC7 /* ScanLocation.swift */; };
+		F4E3F3721B3D4DC21F5B7618 /* UpdateManifestEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FD735DCF3B89D813DB2D8CF /* UpdateManifestEntry.swift */; };
+		F65525A9AA9BCA5A0249F223 /* FileSystemMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6374A2122F3079A1BD7E318D /* FileSystemMonitor.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		7A8466427124B0AC1E37F63C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CF20AACFDD057574C3092F2F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 08FC87220CDBFC1E7805D738;
+			remoteInfo = PluginUpdater;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		02063DE3C8D3333A309332EC /* PluginFormatTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginFormatTests.swift; sourceTree = "<group>"; };
+		0F4C374ECB160B55AF5974F3 /* PersistenceControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceControllerTests.swift; sourceTree = "<group>"; };
+		151EB46EC83CDD51442D51E8 /* URL+PluginBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "URL+PluginBundle.swift"; sourceTree = "<group>"; };
+		197B81B66CD75BA67B4741F0 /* BundleMetadataExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BundleMetadataExtractor.swift; sourceTree = "<group>"; };
+		26FAE2FD3A9E736C649A8D80 /* PluginUpdater.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PluginUpdater.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3E9D30986AADC09D953814BE /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
+		443F8EF8565B79D25D4658BE /* String+Version.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Version.swift"; sourceTree = "<group>"; };
+		48945FF5154578D9FA574F84 /* PluginReconciler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginReconciler.swift; sourceTree = "<group>"; };
+		50B2F733E2F4A6FA4BFC9282 /* PluginFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginFormat.swift; sourceTree = "<group>"; };
+		5CE6380DB266015098CA2F47 /* URLExtensionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLExtensionTests.swift; sourceTree = "<group>"; };
+		613B2B7BA5C37C8E758A0BF9 /* VendorInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VendorInfo.swift; sourceTree = "<group>"; };
+		6374A2122F3079A1BD7E318D /* FileSystemMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileSystemMonitor.swift; sourceTree = "<group>"; };
+		6BC8E0BFE748332634B82821 /* Plugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Plugin.swift; sourceTree = "<group>"; };
+		7A598E6367944C87FE41AEE0 /* PluginReconcilerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginReconcilerTests.swift; sourceTree = "<group>"; };
+		8BC4908F51CDC729F0645FC6 /* PluginVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginVersion.swift; sourceTree = "<group>"; };
+		8FD735DCF3B89D813DB2D8CF /* UpdateManifestEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateManifestEntry.swift; sourceTree = "<group>"; };
+		9EDFCF45CB9FA3E07DE63CF5 /* ScanLocationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanLocationTests.swift; sourceTree = "<group>"; };
+		9F4E2D6328514A432E594F40 /* VersionParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VersionParserTests.swift; sourceTree = "<group>"; };
+		A588CB8DFDCA92B11B7ECDC7 /* ScanLocation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanLocation.swift; sourceTree = "<group>"; };
+		A837F2C3F147FE3B2378743E /* UpdateManifestTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateManifestTests.swift; sourceTree = "<group>"; };
+		A8507964F3E9247BFC5BB580 /* PersistenceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceController.swift; sourceTree = "<group>"; };
+		C0075A029C426D72E02843DB /* PluginScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginScanner.swift; sourceTree = "<group>"; };
+		C87599BD5818534B5DD12E59 /* PluginUpdaterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PluginUpdaterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C8A56CA68C718D6EB1FD50D7 /* PluginModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginModelTests.swift; sourceTree = "<group>"; };
+		DA3A07860952E18E0DEC046B /* VendorResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VendorResolver.swift; sourceTree = "<group>"; };
+		EC93F8EF57BA9A0FD9879280 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		EE5E64D484AEBF8F443CC747 /* PluginUpdaterApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginUpdaterApp.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		16E512DED25F8B04EEF01253 /* PluginUpdater */ = {
+			isa = PBXGroup;
+			children = (
+				6E9FA46DBC2B5A74133ED227 /* App */,
+				C5F74C4848B26F5B4EE7FB8D /* Models */,
+				893BCC1E237B639D99E31C8A /* Services */,
+				1CDDC4AD11EF6EA80F3AC6A0 /* Utilities */,
+				6A68ED38FFF82247453761DD /* Views */,
+			);
+			path = PluginUpdater;
+			sourceTree = "<group>";
+		};
+		1CDDC4AD11EF6EA80F3AC6A0 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				3E9D30986AADC09D953814BE /* Constants.swift */,
+				503F3446C52399A51B4A3DE1 /* Extensions */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		380D6362DC113F72A7F36396 /* Mocks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Mocks;
+			sourceTree = "<group>";
+		};
+		4B79FF31AD704FCEE3410494 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				0F4C374ECB160B55AF5974F3 /* PersistenceControllerTests.swift */,
+				7A598E6367944C87FE41AEE0 /* PluginReconcilerTests.swift */,
+				5CE6380DB266015098CA2F47 /* URLExtensionTests.swift */,
+				9F4E2D6328514A432E594F40 /* VersionParserTests.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		4DBF5A276EB701F43A30D3CD /* Persistence */ = {
+			isa = PBXGroup;
+			children = (
+				A8507964F3E9247BFC5BB580 /* PersistenceController.swift */,
+				48945FF5154578D9FA574F84 /* PluginReconciler.swift */,
+			);
+			path = Persistence;
+			sourceTree = "<group>";
+		};
+		503F3446C52399A51B4A3DE1 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				443F8EF8565B79D25D4658BE /* String+Version.swift */,
+				151EB46EC83CDD51442D51E8 /* URL+PluginBundle.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+		6A68ED38FFF82247453761DD /* Views */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		6E9FA46DBC2B5A74133ED227 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				EC93F8EF57BA9A0FD9879280 /* AppState.swift */,
+				EE5E64D484AEBF8F443CC747 /* PluginUpdaterApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		77F02EF83B9CC6DBD9443868 /* PluginUpdaterTests */ = {
+			isa = PBXGroup;
+			children = (
+				380D6362DC113F72A7F36396 /* Mocks */,
+				78FE303BA9B6455714F5405E /* Models */,
+				4B79FF31AD704FCEE3410494 /* Services */,
+			);
+			path = PluginUpdaterTests;
+			sourceTree = "<group>";
+		};
+		78FE303BA9B6455714F5405E /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				02063DE3C8D3333A309332EC /* PluginFormatTests.swift */,
+				C8A56CA68C718D6EB1FD50D7 /* PluginModelTests.swift */,
+				9EDFCF45CB9FA3E07DE63CF5 /* ScanLocationTests.swift */,
+				A837F2C3F147FE3B2378743E /* UpdateManifestTests.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		893BCC1E237B639D99E31C8A /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				EF9C600E5ADDDA376C7FF39B /* Monitoring */,
+				4DBF5A276EB701F43A30D3CD /* Persistence */,
+				DC38C4483E3C50FF1022E16F /* Scanner */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		C5F74C4848B26F5B4EE7FB8D /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				6BC8E0BFE748332634B82821 /* Plugin.swift */,
+				50B2F733E2F4A6FA4BFC9282 /* PluginFormat.swift */,
+				8BC4908F51CDC729F0645FC6 /* PluginVersion.swift */,
+				A588CB8DFDCA92B11B7ECDC7 /* ScanLocation.swift */,
+				8FD735DCF3B89D813DB2D8CF /* UpdateManifestEntry.swift */,
+				613B2B7BA5C37C8E758A0BF9 /* VendorInfo.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		D86E4D3728A01720FBDD4B5F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				26FAE2FD3A9E736C649A8D80 /* PluginUpdater.app */,
+				C87599BD5818534B5DD12E59 /* PluginUpdaterTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		DC38C4483E3C50FF1022E16F /* Scanner */ = {
+			isa = PBXGroup;
+			children = (
+				197B81B66CD75BA67B4741F0 /* BundleMetadataExtractor.swift */,
+				C0075A029C426D72E02843DB /* PluginScanner.swift */,
+				DA3A07860952E18E0DEC046B /* VendorResolver.swift */,
+			);
+			path = Scanner;
+			sourceTree = "<group>";
+		};
+		EAD02B6BF1E054E272673336 = {
+			isa = PBXGroup;
+			children = (
+				16E512DED25F8B04EEF01253 /* PluginUpdater */,
+				77F02EF83B9CC6DBD9443868 /* PluginUpdaterTests */,
+				D86E4D3728A01720FBDD4B5F /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		EF9C600E5ADDDA376C7FF39B /* Monitoring */ = {
+			isa = PBXGroup;
+			children = (
+				6374A2122F3079A1BD7E318D /* FileSystemMonitor.swift */,
+			);
+			path = Monitoring;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		085BAABEBFCC6F0782E526C1 /* PluginUpdaterTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F9B4B531D94264BA6CDA06F1 /* Build configuration list for PBXNativeTarget "PluginUpdaterTests" */;
+			buildPhases = (
+				CC927717AF6C33F37C4E10C0 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AF3C43B7BC3102855D554C00 /* PBXTargetDependency */,
+			);
+			name = PluginUpdaterTests;
+			packageProductDependencies = (
+			);
+			productName = PluginUpdaterTests;
+			productReference = C87599BD5818534B5DD12E59 /* PluginUpdaterTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		08FC87220CDBFC1E7805D738 /* PluginUpdater */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BBCCD9C9BCEC1115D4C4A28F /* Build configuration list for PBXNativeTarget "PluginUpdater" */;
+			buildPhases = (
+				5AB16FDABFDF082E7B62EA79 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = PluginUpdater;
+			packageProductDependencies = (
+			);
+			productName = PluginUpdater;
+			productReference = 26FAE2FD3A9E736C649A8D80 /* PluginUpdater.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		CF20AACFDD057574C3092F2F /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+				};
+			};
+			buildConfigurationList = 8C9271F78CEB37EB30B5D465 /* Build configuration list for PBXProject "PluginUpdater" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = EAD02B6BF1E054E272673336;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = D86E4D3728A01720FBDD4B5F /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				08FC87220CDBFC1E7805D738 /* PluginUpdater */,
+				085BAABEBFCC6F0782E526C1 /* PluginUpdaterTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		5AB16FDABFDF082E7B62EA79 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5EC118195278CECA9A597B86 /* AppState.swift in Sources */,
+				2399380FC71A4C0E4A1393F6 /* BundleMetadataExtractor.swift in Sources */,
+				ECA8707A7773A23B9E80059F /* Constants.swift in Sources */,
+				F65525A9AA9BCA5A0249F223 /* FileSystemMonitor.swift in Sources */,
+				300120473D5D58C1510785F3 /* PersistenceController.swift in Sources */,
+				846D8655E139B8D9B814B8DE /* Plugin.swift in Sources */,
+				9E34A902CB91B58410878005 /* PluginFormat.swift in Sources */,
+				DE50686CF90D72FE5067B057 /* PluginReconciler.swift in Sources */,
+				424E33F6164C2AC0F13DC754 /* PluginScanner.swift in Sources */,
+				E36F62F52B778306706E170D /* PluginUpdaterApp.swift in Sources */,
+				2EF730C86C416F28B22BEC98 /* PluginVersion.swift in Sources */,
+				F1190AAC2028E4067E12D151 /* ScanLocation.swift in Sources */,
+				BB685A85A17B33B5B7F744F2 /* String+Version.swift in Sources */,
+				77E5B68EC2A706F54DBE4439 /* URL+PluginBundle.swift in Sources */,
+				F4E3F3721B3D4DC21F5B7618 /* UpdateManifestEntry.swift in Sources */,
+				2638FD8F14CECB04E4FA2257 /* VendorInfo.swift in Sources */,
+				1426A98A13DBF5C5D184993D /* VendorResolver.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CC927717AF6C33F37C4E10C0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D9D1FC24E55250860FF6AA5D /* PersistenceControllerTests.swift in Sources */,
+				3B77607C97AEA365C179293C /* PluginFormatTests.swift in Sources */,
+				898EF245015E10839D80C33D /* PluginModelTests.swift in Sources */,
+				C5B8D7AF3420606D0EC80F93 /* PluginReconcilerTests.swift in Sources */,
+				C226CFE3B3914AF892FB57AA /* ScanLocationTests.swift in Sources */,
+				B6220976895AFAD7563D0C4F /* URLExtensionTests.swift in Sources */,
+				0D301D58EFA2BE8EE6C3DCF5 /* UpdateManifestTests.swift in Sources */,
+				D584995C9E4B2B57E7AB34D1 /* VersionParserTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		AF3C43B7BC3102855D554C00 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 08FC87220CDBFC1E7805D738 /* PluginUpdater */;
+			targetProxy = 7A8466427124B0AC1E37F63C /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		12C8D0D643F70840B94E65C6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
+				INFOPLIST_KEY_LSUIElement = NO;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tomioueda.PluginUpdater;
+				PRODUCT_NAME = PluginUpdater;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+		551B74E23891647332B5EE59 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tomioueda.PluginUpdaterTests;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.9;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PluginUpdater.app/Contents/MacOS/PluginUpdater";
+			};
+			name = Debug;
+		};
+		A7DC976B1F7E3BE80785C949 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
+				INFOPLIST_KEY_LSUIElement = NO;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tomioueda.PluginUpdater;
+				PRODUCT_NAME = PluginUpdater;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		AA7893CD485E5777EE3A99FF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		AC9B00F48BFD159EE82D478B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		E4540D3E72C09C16FB40E1A6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tomioueda.PluginUpdaterTests;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.9;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PluginUpdater.app/Contents/MacOS/PluginUpdater";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		8C9271F78CEB37EB30B5D465 /* Build configuration list for PBXProject "PluginUpdater" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AC9B00F48BFD159EE82D478B /* Debug */,
+				AA7893CD485E5777EE3A99FF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		BBCCD9C9BCEC1115D4C4A28F /* Build configuration list for PBXNativeTarget "PluginUpdater" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A7DC976B1F7E3BE80785C949 /* Debug */,
+				12C8D0D643F70840B94E65C6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F9B4B531D94264BA6CDA06F1 /* Build configuration list for PBXNativeTarget "PluginUpdaterTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				551B74E23891647332B5EE59 /* Debug */,
+				E4540D3E72C09C16FB40E1A6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = CF20AACFDD057574C3092F2F /* Project object */;
+}

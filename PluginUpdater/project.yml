@@ -1,0 +1,44 @@
+name: PluginUpdater
+options:
+  bundleIdPrefix: com.tomioueda
+  deploymentTarget:
+    macOS: "14.0"
+  xcodeVersion: "16.0"
+  createIntermediateGroups: true
+
+targets:
+  PluginUpdater:
+    type: application
+    platform: macOS
+    sources:
+      - path: PluginUpdater
+        excludes:
+          - Resources
+    resources:
+      - path: PluginUpdater/Resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.tomioueda.PluginUpdater
+        PRODUCT_NAME: PluginUpdater
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "5.9"
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.music"
+        INFOPLIST_KEY_LSUIElement: NO
+        ENABLE_HARDENED_RUNTIME: YES
+
+  PluginUpdaterTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: PluginUpdaterTests
+    dependencies:
+      - target: PluginUpdater
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.tomioueda.PluginUpdaterTests
+        SWIFT_VERSION: "5.9"
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        GENERATE_INFOPLIST_FILE: YES
