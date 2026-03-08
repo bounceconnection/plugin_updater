@@ -1,0 +1,52 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: write
+
+jobs:
+  build-pkg:
+    name: Build macOS Installer
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install xcodegen
+        run: brew install xcodegen
+
+      - name: Parse version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Build .pkg installer
+        run: ./scripts/build-installer.sh "${{ steps.version.outputs.VERSION }}"
+
+      - name: Locate installer artifact
+        id: pkg
+        run: |
+          PKG_PATH="$(ls build/PluginUpdater-*.pkg | head -1)"
+          echo "PATH=$PKG_PATH" >> "$GITHUB_OUTPUT"
+          echo "NAME=$(basename "$PKG_PATH")" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Plugin Updater ${{ steps.version.outputs.VERSION }}"
+          body: |
+            ## Plugin Updater ${{ steps.version.outputs.VERSION }}
+
+            ### Installation
+            1. Download **${{ steps.pkg.outputs.NAME }}** below.
+            2. Double-click the `.pkg` file.
+            3. Follow the installer prompts — the app is installed to `/Applications`.
+
+            > **Note:** Because this build is unsigned, macOS may show a Gatekeeper warning.
+            > To open anyway: right-click the `.pkg` → **Open** → **Open**.
+          files: ${{ steps.pkg.outputs.PATH }}
+          fail_on_unmatched_files: true
