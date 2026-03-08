@@ -14,6 +14,9 @@ struct PluginMetadata: Sendable {
     let getInfoString: String?
     let bundleIDDomain: String?
     let parentDirectory: String
+
+    /// All string-valued plist fields (for URL extraction by VendorURLResolver)
+    let plistFields: [String: String]
 }
 
 enum BundleMetadataExtractor {
@@ -53,6 +56,14 @@ enum BundleMetadataExtractor {
             format: format
         )
 
+        // Collect all string-valued plist entries for URL extraction
+        var fields: [String: String] = [:]
+        for (key, value) in plist {
+            if let k = key as? String, let v = value as? String {
+                fields[k] = v
+            }
+        }
+
         return PluginMetadata(
             url: bundleURL,
             format: format,
@@ -64,7 +75,8 @@ enum BundleMetadataExtractor {
             copyright: copyright,
             getInfoString: getInfoString,
             bundleIDDomain: bundleIDDomain,
-            parentDirectory: parentDir
+            parentDirectory: parentDir,
+            plistFields: fields
         )
     }
 

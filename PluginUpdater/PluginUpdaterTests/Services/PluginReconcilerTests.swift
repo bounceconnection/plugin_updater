@@ -28,7 +28,8 @@ struct PluginReconcilerTests {
             copyright: nil,
             getInfoString: nil,
             bundleIDDomain: nil,
-            parentDirectory: "VST3"
+            parentDirectory: "VST3",
+            plistFields: [:]
         )
     }
 

@@ -19,6 +19,11 @@ final class AppState {
     private var isScanInProgress = false
     private let manifestManager = ManifestManager()
     private let versionChecker = VersionChecker()
+    private let vendorURLResolver = VendorURLResolver()
+
+    /// Plist fields from most recent scan, keyed by bundleID.
+    /// Used by VendorURLResolver for URL extraction from plist metadata.
+    private var scannedPlistFields: [String: [String: String]] = [:]
 
     init(modelContainer: ModelContainer) {
         self.modelContainer = modelContainer
@@ -37,12 +42,13 @@ final class AppState {
 
         manifestEntries = await manifestManager.allEntries()
 
-        // Load cask mappings for automatic version checking
+        // Load cask mappings + vendor URL overrides
         await versionChecker.loadMappings()
+        await vendorURLResolver.loadOverrides()
     }
 
     /// Checks for available updates via the Homebrew Formulae API
-    /// and merges results into manifestEntries.
+    /// and resolves vendor URLs for all plugins.
     func checkForUpdates() async {
         let context = modelContainer.mainContext
         let descriptor = FetchDescriptor<Plugin>(
@@ -63,38 +69,77 @@ final class AppState {
             manifestEntries[bundleID] = entry
         }
 
-        // Fill in vendor URLs as fallback for plugins without a download URL
-        for plugin in plugins {
-            let bundleID = plugin.bundleIdentifier
-            if let entry = manifestEntries[bundleID], entry.downloadURL == nil {
-                if let vendorURL = await versionChecker.vendorURL(for: bundleID) {
-                    manifestEntries[bundleID] = UpdateManifestEntry(
-                        bundleIdentifier: bundleID,
-                        latestVersion: entry.latestVersion,
-                        downloadURL: vendorURL,
-                        releaseNotes: entry.releaseNotes,
-                        releaseDate: entry.releaseDate
-                    )
-                }
-            } else if manifestEntries[bundleID] == nil {
-                // No manifest entry at all — create one with just the vendor URL
-                if let vendorURL = await versionChecker.vendorURL(for: bundleID) {
-                    manifestEntries[bundleID] = UpdateManifestEntry(
-                        bundleIdentifier: bundleID,
-                        latestVersion: plugin.currentVersion,
-                        downloadURL: vendorURL,
-                        releaseNotes: nil,
-                        releaseDate: nil
-                    )
-                }
-            }
-        }
+        // Resolve vendor URLs for plugins missing a download link
+        await resolveVendorURLs(for: plugins)
 
         // Count plugins with available updates
         updatesAvailableCount = plugins.filter { plugin in
             guard let entry = manifestEntries[plugin.bundleIdentifier] else { return false }
             return entry.latestVersion.isNewerVersion(than: plugin.currentVersion)
         }.count
+    }
+
+    /// Uses VendorURLResolver to find URLs for plugins without download links.
+    /// Tries: hardcoded overrides → plist URLs → reverse-domain → search fallback.
+    private func resolveVendorURLs(for plugins: [Plugin]) async {
+        // Deduplicate by bundleID prefix (2 parts) to avoid redundant HEAD requests
+        var resolved: Set<String> = []
+
+        for plugin in plugins {
+            let bundleID = plugin.bundleIdentifier
+
+            // Skip if already has a download URL
+            if let entry = manifestEntries[bundleID], entry.downloadURL != nil {
+                continue
+            }
+
+            // Deduplicate by vendor domain to avoid checking the same site multiple times
+            let prefix = bundleIDPrefix(bundleID)
+            guard !resolved.contains(prefix) else {
+                // Re-use the already-resolved URL for this prefix
+                if let siblingEntry = manifestEntries.first(where: {
+                    $0.key.hasPrefix(prefix) && $0.value.downloadURL != nil
+                }) {
+                    let existingEntry = manifestEntries[bundleID]
+                    manifestEntries[bundleID] = UpdateManifestEntry(
+                        bundleIdentifier: bundleID,
+                        latestVersion: existingEntry?.latestVersion ?? plugin.currentVersion,
+                        downloadURL: siblingEntry.value.downloadURL,
+                        releaseNotes: existingEntry?.releaseNotes,
+                        releaseDate: existingEntry?.releaseDate
+                    )
+                }
+                continue
+            }
+            resolved.insert(prefix)
+
+            let plistFields = scannedPlistFields[bundleID]
+            let url = await vendorURLResolver.resolve(
+                bundleID: bundleID,
+                plistFields: plistFields,
+                vendorName: plugin.vendorName
+            )
+
+            guard let url else { continue }
+
+            let existingEntry = manifestEntries[bundleID]
+            manifestEntries[bundleID] = UpdateManifestEntry(
+                bundleIdentifier: bundleID,
+                latestVersion: existingEntry?.latestVersion ?? plugin.currentVersion,
+                downloadURL: url,
+                releaseNotes: existingEntry?.releaseNotes,
+                releaseDate: existingEntry?.releaseDate
+            )
+        }
+    }
+
+    /// Extracts the first two parts of a bundle ID: "com.fabfilter.ProQ" → "com.fabfilter"
+    private func bundleIDPrefix(_ bundleID: String) -> String {
+        let parts = bundleID.split(separator: ".", maxSplits: 2)
+        if parts.count >= 2 {
+            return "\(parts[0]).\(parts[1])"
+        }
+        return bundleID
     }
 
     // MARK: - Full Scan
@@ -121,6 +166,12 @@ final class AppState {
             let scanner = PluginScanner()
             let scanResult = await scanner.scan(directories: directories)
 
+            // Cache plist fields for vendor URL resolution
+            scannedPlistFields = [:]
+            for metadata in scanResult.plugins {
+                scannedPlistFields[metadata.bundleIdentifier] = metadata.plistFields
+            }
+
             // Reconcile with persistent store (full scan marks missing plugins as removed)
             scanProgress = 0.7
             let reconciler = PluginReconciler(modelContainer: modelContainer)
@@ -135,7 +186,7 @@ final class AppState {
                 NotificationManager.shared.notifyChanges(result.changes)
             }
 
-            // Check for available updates via Homebrew API
+            // Check for available updates + resolve vendor URLs
             await checkForUpdates()
 
             // Start monitoring after first successful scan
@@ -158,6 +209,11 @@ final class AppState {
         do {
             let scanner = PluginScanner()
             let scanResult = await scanner.scan(directories: directories)
+
+            // Update plist fields cache with incremental results
+            for metadata in scanResult.plugins {
+                scannedPlistFields[metadata.bundleIdentifier] = metadata.plistFields
+            }
 
             let reconciler = PluginReconciler(modelContainer: modelContainer)
             let result = try await reconciler.reconcile(scannedPlugins: scanResult.plugins, fullScan: false)
