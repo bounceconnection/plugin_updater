@@ -18,6 +18,8 @@ targets:
         buildPhase: resources
     entitlements:
       path: PluginUpdater/PluginUpdater.entitlements
+      properties:
+        com.apple.security.network.client: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tomioueda.PluginUpdater
