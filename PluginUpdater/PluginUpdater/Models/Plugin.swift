@@ -12,6 +12,7 @@ final class Plugin {
     var installedDate: Date
     var lastSeenDate: Date
     var isRemoved: Bool
+    var isHidden: Bool
 
     @Relationship(deleteRule: .cascade, inverse: \PluginVersion.plugin)
     var versionHistory: [PluginVersion]
@@ -28,7 +29,8 @@ final class Plugin {
         vendorName: String = "Unknown",
         installedDate: Date = .now,
         lastSeenDate: Date = .now,
-        isRemoved: Bool = false
+        isRemoved: Bool = false,
+        isHidden: Bool = false
     ) {
         self.name = name
         self.bundleIdentifier = bundleIdentifier
@@ -39,6 +41,7 @@ final class Plugin {
         self.installedDate = installedDate
         self.lastSeenDate = lastSeenDate
         self.isRemoved = isRemoved
+        self.isHidden = isHidden
         self.versionHistory = []
     }
 

@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0D301D58EFA2BE8EE6C3DCF5 /* UpdateManifestTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A837F2C3F147FE3B2378743E /* UpdateManifestTests.swift */; };
+		C4D5E6F7A8B9C0D1E2F3A4B5 /* PluginHideTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E6F7A8B9C0D1E2F3A4B5C6 /* PluginHideTests.swift */; };
 		0D59BE745E8A11095705C990 /* VendorResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DBDCA9E8EEA702794CA532A /* VendorResolverTests.swift */; };
 		1426A98A13DBF5C5D184993D /* VendorResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA3A07860952E18E0DEC046B /* VendorResolver.swift */; };
 		1AD3F653DF2ED4EE9DE9FA48 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 696F41E6C13E22B96BB66267 /* DashboardView.swift */; };
@@ -72,6 +73,7 @@
 
 /* Begin PBXFileReference section */
 		02063DE3C8D3333A309332EC /* PluginFormatTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginFormatTests.swift; sourceTree = "<group>"; };
+		D5E6F7A8B9C0D1E2F3A4B5C6 /* PluginHideTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginHideTests.swift; sourceTree = "<group>"; };
 		058703EFBA8361D1A9CFE0E8 /* VendorURLResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VendorURLResolverTests.swift; sourceTree = "<group>"; };
 		0DC3971E9045D641781CF69E /* ScanPathsEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanPathsEditor.swift; sourceTree = "<group>"; };
 		0F4C374ECB160B55AF5974F3 /* PersistenceControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceControllerTests.swift; sourceTree = "<group>"; };
@@ -265,6 +267,7 @@
 			isa = PBXGroup;
 			children = (
 				02063DE3C8D3333A309332EC /* PluginFormatTests.swift */,
+				D5E6F7A8B9C0D1E2F3A4B5C6 /* PluginHideTests.swift */,
 				C8A56CA68C718D6EB1FD50D7 /* PluginModelTests.swift */,
 				9EDFCF45CB9FA3E07DE63CF5 /* ScanLocationTests.swift */,
 				A837F2C3F147FE3B2378743E /* UpdateManifestTests.swift */,
@@ -515,6 +518,7 @@
 			files = (
 				A4F965356550E03BE2D1254D /* AssetNamesTests.swift in Sources */,
 				F3C6BA58672FB61A3F52CA11 /* BundleMetadataExtractorTests.swift in Sources */,
+				C4D5E6F7A8B9C0D1E2F3A4B5 /* PluginHideTests.swift in Sources */,
 				D9D1FC24E55250860FF6AA5D /* PersistenceControllerTests.swift in Sources */,
 				3B77607C97AEA365C179293C /* PluginFormatTests.swift in Sources */,
 				898EF245015E10839D80C33D /* PluginModelTests.swift in Sources */,
