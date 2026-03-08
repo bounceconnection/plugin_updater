@@ -9,7 +9,7 @@ struct PersistenceControllerTests {
     @Test("Creates in-memory container successfully")
     func inMemoryContainer() throws {
         let container = try PersistenceController.makeContainer(inMemory: true)
-        #expect(container.schema.entities.count > 0)
+        #expect(!container.schema.entities.isEmpty)
     }
 
     @Test("In-memory container can insert and fetch Plugin")
