@@ -27,7 +27,7 @@ struct PluginUpdaterApp: App {
         }
         .modelContainer(modelContainer)
 
-        MenuBarExtra("Plugin Updater", systemImage: "puzzlepiece.extension") {
+        MenuBarExtra("Plugin Updater", image: Constants.AssetNames.menuBarIcon) {
             MenuBarPopoverView()
                 .environment(appState)
         }

@@ -24,6 +24,11 @@ enum Constants {
         static let scanCompleted = "com.tomioueda.PluginUpdater.scanCompleted"
     }
 
+    enum AssetNames {
+        static let menuBarIcon = "MenuBarIcon"
+        static let appIcon = "AppIcon"
+    }
+
     static let defaultScanLocations: [(path: String, format: PluginFormat)] = [
         ("/Library/Audio/Plug-Ins/VST3", .vst3),
         ("~/Library/Audio/Plug-Ins/VST3", .vst3),

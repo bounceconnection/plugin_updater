@@ -112,6 +112,13 @@ struct DashboardView: View {
                 }
             }
             .navigationTitle("Plugins")
+            .safeAreaInset(edge: .bottom) {
+                Image(nsImage: NSApp.applicationIconImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .opacity(0.5)
+                    .padding(16)
+            }
         } detail: {
             Table(filteredRows, selection: $selectedPluginID, sortOrder: $sortOrder) {
                 TableColumn("Name", value: \PluginRow.name) { (row: PluginRow) in
@@ -164,15 +171,15 @@ struct DashboardView: View {
                         Button {
                             Task { await appState.performScan() }
                         } label: {
-                            Label("Scan Now", systemImage: "arrow.clockwise")
+                            HStack(spacing: 6) {
+                                Text(statusSubtitle)
+                                    .font(.caption)
+                                Image(systemName: "arrow.clockwise")
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
                         }
-                        .controlSize(.large)
                     }
-                }
-                ToolbarItem(placement: .secondaryAction) {
-                    Text(statusSubtitle)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
                 }
                 ToolbarItem(placement: .primaryAction) {
                     HStack(spacing: 8) {
