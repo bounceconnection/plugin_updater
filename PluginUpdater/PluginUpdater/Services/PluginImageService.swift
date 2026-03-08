@@ -45,15 +45,8 @@ actor PluginImageService {
             return save(img, key: key, file: cacheFile)
         }
 
-        // Strategy 3: OG image from vendor website (skip search URLs)
-        if let url = vendorURL, !url.contains("google.com/search") {
-            if let img = await fetchOGImage(from: url) {
-                return save(img, key: key, file: cacheFile)
-            }
-        }
-
-        // Strategy 4: Web image search
-        if let img = await webImageSearch(name: pluginName, vendor: vendorName) {
+        // Strategy 3: Bing image search (prefers vendor domain product page images)
+        if let img = await webImageSearch(name: pluginName, vendor: vendorName, vendorURL: vendorURL) {
             return save(img, key: key, file: cacheFile)
         }
 
@@ -105,67 +98,17 @@ actor PluginImageService {
 
     // MARK: - Strategy 3: OG Image from Vendor Website
 
-    private func fetchOGImage(from urlString: String) async -> NSImage? {
-        // Upgrade HTTP to HTTPS to satisfy ATS policy
-        let secureString = urlString.hasPrefix("http://")
-            ? "https://" + urlString.dropFirst(7)
-            : urlString
-        guard let url = URL(string: secureString) else { return nil }
+    // MARK: - Strategy 3: Web Image Search (Bing async endpoint)
 
-        let config = URLSessionConfiguration.ephemeral
-        config.timeoutIntervalForRequest = 6
-        config.timeoutIntervalForResource = 10
-        let session = URLSession(configuration: config)
-
-        guard let (data, response) = try? await session.data(from: url),
-              let http = response as? HTTPURLResponse,
-              http.statusCode == 200,
-              let html = String(data: data, encoding: .utf8) else {
-            return nil
-        }
-
-        let patterns = [
-            #"<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']"#,
-            #"<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["']"#,
-        ]
-
-        for pattern in patterns {
-            guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
-                  let match = regex.firstMatch(in: html, range: NSRange(html.startIndex..., in: html)),
-                  let range = Range(match.range(at: 1), in: html) else { continue }
-
-            var imageURLString = String(html[range])
-            if imageURLString.hasPrefix("http://") {
-                imageURLString = "https://" + imageURLString.dropFirst(7)
-            } else if imageURLString.hasPrefix("//") {
-                imageURLString = "https:" + imageURLString
-            } else if imageURLString.hasPrefix("/") {
-                if let host = url.host {
-                    imageURLString = "https://\(host)\(imageURLString)"
-                }
-            }
-
-            guard let imageURL = URL(string: imageURLString) else { continue }
-
-            if let (imgData, imgResp) = try? await session.data(from: imageURL),
-               let imgHTTP = imgResp as? HTTPURLResponse,
-               imgHTTP.statusCode == 200,
-               let img = NSImage(data: imgData),
-               img.size.width >= 50, img.size.height >= 50,
-               isReasonableAspectRatio(img) {
-                return img
-            }
-        }
-
-        return nil
+    private struct ImageCandidate {
+        let imageURL: URL
+        let pageHost: String?
     }
 
-    // MARK: - Strategy 4: Web Image Search (Bing async endpoint)
-
-    private func webImageSearch(name: String, vendor: String) async -> NSImage? {
+    private func webImageSearch(name: String, vendor: String, vendorURL: String? = nil) async -> NSImage? {
         let query = "\(name) \(vendor) audio plugin"
         guard let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-              let searchURL = URL(string: "https://www.bing.com/images/async?q=\(encoded)&first=0&count=5&mmasync=1") else {
+              let searchURL = URL(string: "https://www.bing.com/images/async?q=\(encoded)&first=0&count=10&mmasync=1") else {
             return nil
         }
 
@@ -183,10 +126,21 @@ actor PluginImageService {
             return nil
         }
 
-        // Try each candidate URL until one downloads successfully
-        let imageURLs = extractImageURLs(from: html)
-        for imageURL in imageURLs.prefix(3) {
-            var imgRequest = URLRequest(url: imageURL, timeoutInterval: 8)
+        // Extract candidates with their source page URLs
+        let candidates = extractImageCandidates(from: html)
+
+        // Prioritize: vendor domain images first, then others
+        let vendorHost = vendorURL.flatMap { URL(string: $0)?.host?.replacingOccurrences(of: "www.", with: "") }
+        let sorted = candidates.sorted { a, b in
+            let aIsVendor = vendorHost != nil && (a.pageHost?.contains(vendorHost!) == true)
+            let bIsVendor = vendorHost != nil && (b.pageHost?.contains(vendorHost!) == true)
+            if aIsVendor != bIsVendor { return aIsVendor }
+            return false
+        }
+
+        // Try each candidate until one downloads successfully
+        for candidate in sorted.prefix(5) {
+            var imgRequest = URLRequest(url: candidate.imageURL, timeoutInterval: 8)
             imgRequest.setValue(
                 "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15",
                 forHTTPHeaderField: "User-Agent"
@@ -196,7 +150,7 @@ actor PluginImageService {
                   let imgHTTP = imgResp as? HTTPURLResponse,
                   imgHTTP.statusCode == 200,
                   let img = NSImage(data: imgData),
-                  img.size.width >= 50, img.size.height >= 50,
+                  img.size.width >= 100, img.size.height >= 100,
                   isReasonableAspectRatio(img) else {
                 continue
             }
@@ -206,37 +160,36 @@ actor PluginImageService {
         return nil
     }
 
-    private func extractImageURLs(from html: String) -> [URL] {
-        // Bing async endpoint encodes full-size image URLs as "murl" in HTML-entity-encoded JSON
-        let pattern = #"murl&quot;:&quot;(https?://[^&]+?)&quot;"#
+    private func extractImageCandidates(from html: String) -> [ImageCandidate] {
+        // Bing async endpoint: each result has purl (page) and murl (image) in HTML-entity-encoded JSON
+        let pattern = #"purl&quot;:&quot;(https?://[^&]+?)&quot;.*?murl&quot;:&quot;(https?://[^&]+?)&quot;"#
         guard let regex = try? NSRegularExpression(pattern: pattern) else { return [] }
         let matches = regex.matches(in: html, range: NSRange(html.startIndex..., in: html))
 
-        var urls: [URL] = []
+        var candidates: [ImageCandidate] = []
         for match in matches {
-            guard let range = Range(match.range(at: 1), in: html) else { continue }
-            var urlString = String(html[range])
-                .replacingOccurrences(of: "&amp;", with: "&")
+            guard match.numberOfRanges >= 3,
+                  let purlRange = Range(match.range(at: 1), in: html),
+                  let murlRange = Range(match.range(at: 2), in: html) else { continue }
 
-            // Upgrade HTTP to HTTPS for ATS
-            if urlString.hasPrefix("http://") {
-                urlString = "https://" + urlString.dropFirst(7)
-            }
+            let pageURLString = String(html[purlRange]).replacingOccurrences(of: "&amp;", with: "&")
+            var imageURLString = String(html[murlRange]).replacingOccurrences(of: "&amp;", with: "&")
 
-            let lower = urlString.lowercased()
-            if lower.contains("favicon") || lower.contains("logo") || lower.contains("avatar") {
-                continue
-            }
-            if lower.contains("100x") || lower.contains("_thumb") || lower.contains("_small") {
-                continue
+            if imageURLString.hasPrefix("http://") {
+                imageURLString = "https://" + imageURLString.dropFirst(7)
             }
 
-            if let url = URL(string: urlString) {
-                urls.append(url)
-            }
+            let lower = imageURLString.lowercased()
+            if lower.contains("favicon") || lower.contains("logo") || lower.contains("avatar") { continue }
+            if lower.contains("_thumb") || lower.contains("_small") { continue }
+
+            guard let imageURL = URL(string: imageURLString) else { continue }
+            let pageHost = URL(string: pageURLString)?.host?.replacingOccurrences(of: "www.", with: "")
+
+            candidates.append(ImageCandidate(imageURL: imageURL, pageHost: pageHost))
         }
 
-        return urls
+        return candidates
     }
 
     // MARK: - Helpers

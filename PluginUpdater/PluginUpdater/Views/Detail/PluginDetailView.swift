@@ -44,7 +44,7 @@ struct PluginDetailView: View {
                         Image(nsImage: pluginImage)
                             .resizable()
                             .aspectRatio(contentMode: .fit)
-                            .frame(maxWidth: 280, maxHeight: 200)
+                            .frame(maxHeight: 200)
                             .cornerRadius(8)
                             .shadow(radius: 3)
                     } else if imageLoaded {
