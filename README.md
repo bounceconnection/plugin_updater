@@ -10,6 +10,7 @@
 - **Update Detection** — Find newer versions of your installed plugins upon each scan
 - **Format Support** — VST3, Audio Unit (AU), and CLAP plugin formats
 - **Sortable Columns** — Sort by name, vendor, format, installed version, or available version to quickly find plugins that need updating
+- **Hide Plugins** — Right-click to hide plugins you don't care about; view and unhide them from the Hidden section in the sidebar
 - **Sidebar Filtering** — Filter by format (VST3, AU, CLAP) or show only plugins with updates available
 - **Detail Inspector** — View bundle ID, file path, version history, and download links for any plugin
 - **Real-time Monitoring** — Uses FSEvents to detect plugin changes in the background and trigger incremental scans
