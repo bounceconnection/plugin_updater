@@ -62,6 +62,33 @@ final class AppState {
             manifestEntries[bundleID] = entry
         }
 
+        // Fill in vendor URLs as fallback for plugins without a download URL
+        for plugin in plugins {
+            let bundleID = plugin.bundleIdentifier
+            if let entry = manifestEntries[bundleID], entry.downloadURL == nil {
+                if let vendorURL = await versionChecker.vendorURL(for: bundleID) {
+                    manifestEntries[bundleID] = UpdateManifestEntry(
+                        bundleIdentifier: bundleID,
+                        latestVersion: entry.latestVersion,
+                        downloadURL: vendorURL,
+                        releaseNotes: entry.releaseNotes,
+                        releaseDate: entry.releaseDate
+                    )
+                }
+            } else if manifestEntries[bundleID] == nil {
+                // No manifest entry at all — create one with just the vendor URL
+                if let vendorURL = await versionChecker.vendorURL(for: bundleID) {
+                    manifestEntries[bundleID] = UpdateManifestEntry(
+                        bundleIdentifier: bundleID,
+                        latestVersion: plugin.currentVersion,
+                        downloadURL: vendorURL,
+                        releaseNotes: nil,
+                        releaseDate: nil
+                    )
+                }
+            }
+        }
+
         // Count plugins with available updates
         updatesAvailableCount = plugins.filter { plugin in
             guard let entry = manifestEntries[plugin.bundleIdentifier] else { return false }

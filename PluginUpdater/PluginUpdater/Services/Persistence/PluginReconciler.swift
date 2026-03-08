@@ -30,28 +30,32 @@ actor PluginReconciler {
     /// Detects new, updated, removed, and reappeared plugins in a single pass.
     /// Set `fullScan` to false for incremental scans so unseen plugins are not marked as removed.
     func reconcile(scannedPlugins: [PluginMetadata], fullScan: Bool = true) throws -> ReconciliationResult {
-        // Deduplicate by bundleIdentifier — when the same plugin exists in both
-        // system and user directories, keep the one with the newer version
-        var dedupedByID: [String: PluginMetadata] = [:]
+        // Deduplicate by (bundleIdentifier, format) — when the same plugin
+        // format exists in both system and user directories, keep the one
+        // with the newer version. Different formats (VST3, AU, CLAP) of the
+        // same plugin are tracked separately.
+        var dedupedByKey: [String: PluginMetadata] = [:]
         for metadata in scannedPlugins {
-            if let existing = dedupedByID[metadata.bundleIdentifier] {
+            let key = "\(metadata.bundleIdentifier):\(metadata.format.rawValue)"
+            if let existing = dedupedByKey[key] {
                 if metadata.version.isNewerVersion(than: existing.version) {
-                    dedupedByID[metadata.bundleIdentifier] = metadata
+                    dedupedByKey[key] = metadata
                 }
             } else {
-                dedupedByID[metadata.bundleIdentifier] = metadata
+                dedupedByKey[key] = metadata
             }
         }
-        let uniquePlugins = Array(dedupedByID.values)
+        let uniquePlugins = Array(dedupedByKey.values)
 
         // Fetch all existing plugins
         let descriptor = FetchDescriptor<Plugin>()
         let existingPlugins = try modelContext.fetch(descriptor)
 
-        // Index existing plugins by bundleIdentifier for O(1) lookup
-        var existingByBundleID: [String: Plugin] = [:]
+        // Index existing plugins by (bundleIdentifier, format) for O(1) lookup
+        var existingByKey: [String: Plugin] = [:]
         for plugin in existingPlugins {
-            existingByBundleID[plugin.bundleIdentifier] = plugin
+            let key = "\(plugin.bundleIdentifier):\(plugin.format.rawValue)"
+            existingByKey[key] = plugin
         }
 
         // Build vendor cache from existing records
@@ -62,16 +66,17 @@ actor PluginReconciler {
             vendorsByName[vendor.name] = vendor
         }
 
-        var seenBundleIDs: Set<String> = []
+        var seenKeys: Set<String> = []
         var newCount = 0
         var updatedCount = 0
         var unchangedCount = 0
         var changes: [PluginChange] = []
 
         for metadata in uniquePlugins {
-            seenBundleIDs.insert(metadata.bundleIdentifier)
+            let key = "\(metadata.bundleIdentifier):\(metadata.format.rawValue)"
+            seenKeys.insert(key)
 
-            if let existing = existingByBundleID[metadata.bundleIdentifier] {
+            if let existing = existingByKey[key] {
                 processExistingPlugin(
                     existing,
                     metadata: metadata,
@@ -99,7 +104,7 @@ actor PluginReconciler {
         if fullScan {
             removedCount = markRemovedPlugins(
                 existingPlugins: existingPlugins,
-                seenBundleIDs: seenBundleIDs,
+                seenKeys: seenKeys,
                 changes: &changes
             )
         }
@@ -192,12 +197,13 @@ actor PluginReconciler {
 
     private func markRemovedPlugins(
         existingPlugins: [Plugin],
-        seenBundleIDs: Set<String>,
+        seenKeys: Set<String>,
         changes: inout [PluginChange]
     ) -> Int {
         var removedCount = 0
         for plugin in existingPlugins {
-            if !seenBundleIDs.contains(plugin.bundleIdentifier) && !plugin.isRemoved {
+            let key = "\(plugin.bundleIdentifier):\(plugin.format.rawValue)"
+            if !seenKeys.contains(key) && !plugin.isRemoved {
                 plugin.isRemoved = true
                 removedCount += 1
                 changes.append(PluginChange(

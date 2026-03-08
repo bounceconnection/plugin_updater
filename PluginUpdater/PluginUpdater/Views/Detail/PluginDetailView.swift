@@ -6,10 +6,6 @@ struct PluginDetailView: View {
     let plugin: Plugin
     let manifest: [String: UpdateManifestEntry]
 
-    private var sortedHistory: [PluginVersion] {
-        plugin.versionHistory.sorted { $0.detectedDate > $1.detectedDate }
-    }
-
     private var manifestEntry: UpdateManifestEntry? {
         manifest[plugin.bundleIdentifier]
     }
@@ -82,36 +78,7 @@ struct PluginDetailView: View {
 
                 Divider()
 
-                // Version History
-                Text("Version History")
-                    .font(.headline)
-
-                if sortedHistory.isEmpty {
-                    Text("No version changes recorded")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(sortedHistory) { version in
-                        HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(version.version)
-                                    .font(.body.monospaced())
-                                if let prev = version.previousVersion {
-                                    Text("from \(prev)")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                            Spacer()
-                            Text(version.detectedDate.formatted(.dateTime.month().day().year()))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        if version.id != sortedHistory.last?.id {
-                            Divider()
-                        }
-                    }
-                }
+                VersionHistoryView(versions: plugin.versionHistory)
             }
             .padding()
         }

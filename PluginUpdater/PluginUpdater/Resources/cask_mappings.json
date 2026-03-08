@@ -16,5 +16,9 @@
   {"bundle_id_prefix": "com.ValhallaDSP.ValhallaSupermassive", "cask": "valhalla-supermassive"},
   {"bundle_id_prefix": "com.ValhallaDSP.ValhallaFreqEcho", "cask": "valhalla-freq-echo"},
   {"bundle_id_prefix": "com.ValhallaDSP.ValhallaSpaceModulator", "cask": "valhalla-space-modulator"},
-  {"bundle_id_prefix": "com.soundtoys", "cask": "soundtoys"}
+  {"bundle_id_prefix": "com.soundtoys", "cask": "soundtoys"},
+  {"bundle_id_prefix": "studio.kx.distrho.Cardinal", "cask": "cardinal"},
+  {"bundle_id_prefix": "com.digitalsuburban.Dexed", "cask": "dexed"},
+  {"bundle_id_prefix": "com.vcvrack", "cask": "vcv-rack"},
+  {"bundle_id_prefix": "com.oeksound.soothe2", "cask": "soothe2"}
 ]

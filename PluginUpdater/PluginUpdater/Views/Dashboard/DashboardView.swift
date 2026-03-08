@@ -12,6 +12,7 @@ struct PluginRow: Identifiable {
     let plugin: Plugin
     let availableVersion: String
     let hasUpdate: Bool
+    let downloadURL: String?
 
     var id: PersistentIdentifier { plugin.id }
     var name: String { plugin.name }
@@ -20,6 +21,8 @@ struct PluginRow: Identifiable {
     var currentVersion: String { plugin.currentVersion }
     /// 2 = update available, 1 = up to date, 0 = no data. Descending sort puts updates first.
     var updatePriority: Int { hasUpdate ? 2 : (availableVersion == "—" ? 0 : 1) }
+    /// 1 = has download link, 0 = no link. For sorting.
+    var hasDownload: Int { downloadURL != nil ? 1 : 0 }
 }
 
 @MainActor
@@ -58,9 +61,9 @@ struct DashboardView: View {
             let manifest = appState.manifestEntries
             if let entry = manifest[plugin.bundleIdentifier] {
                 let hasUpdate = entry.latestVersion.isNewerVersion(than: plugin.currentVersion)
-                return PluginRow(plugin: plugin, availableVersion: entry.latestVersion, hasUpdate: hasUpdate)
+                return PluginRow(plugin: plugin, availableVersion: entry.latestVersion, hasUpdate: hasUpdate, downloadURL: entry.downloadURL)
             }
-            return PluginRow(plugin: plugin, availableVersion: "—", hasUpdate: false)
+            return PluginRow(plugin: plugin, availableVersion: "—", hasUpdate: false, downloadURL: nil)
         }
 
         return rows.sorted(using: sortOrder)
@@ -133,6 +136,16 @@ struct DashboardView: View {
                     )
                 }
                 .width(min: 60, ideal: 80, max: 120)
+                TableColumn("Download", value: \PluginRow.hasDownload) { (row: PluginRow) in
+                    if let urlString = row.downloadURL, let url = URL(string: urlString) {
+                        Link(destination: url) {
+                            Label("Get", systemImage: "arrow.down.circle")
+                                .labelStyle(.titleAndIcon)
+                        }
+                        .buttonStyle(.borderless)
+                    }
+                }
+                .width(min: 50, ideal: 70, max: 90)
             }
             .overlay {
                 if plugins.isEmpty && !appState.isScanning {

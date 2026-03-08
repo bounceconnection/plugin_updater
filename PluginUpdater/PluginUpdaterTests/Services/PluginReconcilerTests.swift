@@ -220,6 +220,68 @@ struct PluginReconcilerTests {
         #expect(result.changes.isEmpty)
     }
 
+    @Test("Same plugin in multiple formats is tracked separately")
+    func multiFormatPluginsTrackedSeparately() async throws {
+        let container = try makeContainer()
+        let reconciler = PluginReconciler(modelContainer: container)
+
+        let scanned = [
+            makeMetadata(name: "PaulXStretch", bundleID: "com.sonosaurus.paulxstretch", version: "1.6.0", format: .vst3),
+            makeMetadata(name: "PaulXStretch", bundleID: "com.sonosaurus.paulxstretch", version: "1.6.0", format: .au, vendor: "Sonosaurus"),
+        ]
+
+        let result = try await reconciler.reconcile(scannedPlugins: scanned)
+
+        #expect(result.newPlugins == 2)
+        #expect(result.totalProcessed == 2)
+
+        let context = ModelContext(container)
+        let plugins = try context.fetch(FetchDescriptor<Plugin>())
+        #expect(plugins.count == 2)
+
+        let formats = Set(plugins.map(\.format))
+        #expect(formats.contains(.vst3))
+        #expect(formats.contains(.au))
+    }
+
+    @Test("Removing one format does not remove others with same bundle ID")
+    func removeOneFormatKeepsOthers() async throws {
+        let container = try makeContainer()
+
+        // Pre-populate both VST3 and AU
+        let context = ModelContext(container)
+        let vst3 = Plugin(
+            name: "PaulXStretch", bundleIdentifier: "com.sonosaurus.paulxstretch",
+            format: .vst3, currentVersion: "1.6.0",
+            path: "/Library/Audio/Plug-Ins/VST3/PaulXStretch.vst3"
+        )
+        let au = Plugin(
+            name: "PaulXStretch", bundleIdentifier: "com.sonosaurus.paulxstretch",
+            format: .au, currentVersion: "1.6.0",
+            path: "/Library/Audio/Plug-Ins/Components/PaulXStretch.component"
+        )
+        context.insert(vst3)
+        context.insert(au)
+        try context.save()
+
+        // Scan only finds the VST3 — AU should be marked removed
+        let reconciler = PluginReconciler(modelContainer: container)
+        let scanned = [
+            makeMetadata(name: "PaulXStretch", bundleID: "com.sonosaurus.paulxstretch", version: "1.6.0", format: .vst3),
+        ]
+        let result = try await reconciler.reconcile(scannedPlugins: scanned)
+
+        #expect(result.removedPlugins == 1)
+        #expect(result.unchangedPlugins == 1)
+
+        let freshContext = ModelContext(container)
+        let plugins = try freshContext.fetch(FetchDescriptor<Plugin>())
+        let removedAU = plugins.first { $0.format == .au }
+        let keptVST3 = plugins.first { $0.format == .vst3 }
+        #expect(removedAU?.isRemoved == true)
+        #expect(keptVST3?.isRemoved == false)
+    }
+
     @Test("Unchanged plugins update lastSeenDate only")
     func unchangedPluginsUpdateLastSeen() async throws {
         let container = try makeContainer()

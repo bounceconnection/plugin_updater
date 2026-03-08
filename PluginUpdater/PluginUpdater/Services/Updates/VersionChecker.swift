@@ -14,14 +14,36 @@ actor VersionChecker {
         }
     }
 
+    struct VendorURL: Codable {
+        let bundleIDPrefix: String
+        let url: String
+
+        enum CodingKeys: String, CodingKey {
+            case bundleIDPrefix = "bundle_id_prefix"
+            case url
+        }
+    }
+
     private var mappings: [CaskMapping] = []
+    private var vendorURLs: [VendorURL] = []
 
     func loadMappings() {
-        guard let url = Bundle.main.url(forResource: "cask_mappings", withExtension: "json"),
-              let data = try? Data(contentsOf: url),
-              let decoded = try? JSONDecoder().decode([CaskMapping].self, from: data)
-        else { return }
-        mappings = decoded
+        if let url = Bundle.main.url(forResource: "cask_mappings", withExtension: "json"),
+           let data = try? Data(contentsOf: url),
+           let decoded = try? JSONDecoder().decode([CaskMapping].self, from: data) {
+            mappings = decoded
+        }
+
+        if let url = Bundle.main.url(forResource: "vendor_urls", withExtension: "json"),
+           let data = try? Data(contentsOf: url),
+           let decoded = try? JSONDecoder().decode([VendorURL].self, from: data) {
+            vendorURLs = decoded
+        }
+    }
+
+    /// Returns the vendor website URL for a given bundle ID, if known.
+    func vendorURL(for bundleID: String) -> String? {
+        vendorURLs.first(where: { bundleID.hasPrefix($0.bundleIDPrefix) })?.url
     }
 
     /// Given a dictionary of [bundleID: installedVersion], queries the Homebrew API
@@ -56,7 +78,7 @@ actor VersionChecker {
                     results[plugin.bundleID] = UpdateManifestEntry(
                         bundleIdentifier: plugin.bundleID,
                         latestVersion: response.version,
-                        downloadURL: response.url,
+                        downloadURL: response.url ?? response.homepage,
                         releaseNotes: nil,
                         releaseDate: nil
                     )
