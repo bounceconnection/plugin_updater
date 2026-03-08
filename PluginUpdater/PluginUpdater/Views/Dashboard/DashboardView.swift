@@ -46,7 +46,7 @@ struct DashboardView: View {
     @State private var debouncedSearchText = ""
     @State private var searchTask: Task<Void, Never>?
     @State private var sortOrder = [KeyPathComparator(\PluginRow.name)]
-    @State private var selectedPluginID: PersistentIdentifier?
+    @State private var selectedPluginIDs: Set<PersistentIdentifier> = []
     @State private var showInspector = false
 
     // MARK: - Computed helpers
@@ -120,7 +120,7 @@ struct DashboardView: View {
     }
 
     private var selectedPlugin: Plugin? {
-        guard let id = selectedPluginID else { return nil }
+        guard selectedPluginIDs.count == 1, let id = selectedPluginIDs.first else { return nil }
         return plugins.first { $0.id == id }
     }
 
@@ -170,7 +170,7 @@ struct DashboardView: View {
                     .padding(16)
             }
         } detail: {
-            Table(rows, selection: $selectedPluginID, sortOrder: $sortOrder) {
+            Table(rows, selection: $selectedPluginIDs, sortOrder: $sortOrder) {
                 TableColumn("Name", value: \PluginRow.name) { (row: PluginRow) in
                     Text(row.name)
                 }
@@ -251,6 +251,19 @@ struct DashboardView: View {
                 }
                 ToolbarItem(placement: .primaryAction) {
                     HStack(spacing: 8) {
+                        if !selectedPluginIDs.isEmpty {
+                            Button {
+                                let hide = sidebarSelection != .hidden
+                                setHidden(hide, for: selectedPluginIDs)
+                                selectedPluginIDs = []
+                            } label: {
+                                Label(
+                                    sidebarSelection == .hidden ? "Unhide Selected" : "Hide Selected",
+                                    systemImage: sidebarSelection == .hidden ? "eye" : "eye.slash"
+                                )
+                            }
+                            .labelStyle(.titleAndIcon)
+                        }
                         TextField("Search plugins or vendors", text: $searchText)
                             .textFieldStyle(.roundedBorder)
                             .frame(minWidth: 180, idealWidth: 250)
@@ -264,7 +277,14 @@ struct DashboardView: View {
                 }
             }
             .inspector(isPresented: $showInspector) {
-                if let plugin = selectedPlugin {
+                if selectedPluginIDs.count > 1 {
+                    ContentUnavailableView(
+                        "Multiple Plugins Selected",
+                        systemImage: "cursorarrow.click.2",
+                        description: Text("Select an individual plugin to view its details.")
+                    )
+                    .inspectorColumnWidth(min: 280, ideal: 320, max: 400)
+                } else if let plugin = selectedPlugin {
                     PluginDetailView(plugin: plugin, manifest: appState.manifestEntries)
                         .inspectorColumnWidth(min: 280, ideal: 320, max: 400)
                 } else {
@@ -286,8 +306,8 @@ struct DashboardView: View {
                     }
                 }
             }
-            .onChange(of: selectedPluginID) { _, newValue in
-                if newValue != nil {
+            .onChange(of: selectedPluginIDs) { _, newValue in
+                if !newValue.isEmpty {
                     showInspector = true
                 }
             }
