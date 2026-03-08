@@ -52,4 +52,12 @@ extension String {
     func isNewerVersion(than other: String) -> Bool {
         compareVersion(to: other) == .orderedDescending
     }
+
+    /// Escapes a string for use in a CSV field (wraps in quotes if needed).
+    var csvEscaped: String {
+        if contains(",") || contains("\"") || contains("\n") {
+            return "\"\(replacingOccurrences(of: "\"", with: "\"\""))\""
+        }
+        return self
+    }
 }

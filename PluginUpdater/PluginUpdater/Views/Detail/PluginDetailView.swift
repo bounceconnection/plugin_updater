@@ -18,12 +18,20 @@ struct PluginDetailView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(plugin.name)
                             .font(.title2.bold())
-                        Text(plugin.vendorName)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                        VendorLink(
+                            vendorName: plugin.vendorName,
+                            vendorURL: manifestEntry?.downloadURL
+                        )
+                        .font(.subheadline)
                     }
                     Spacer()
-                    PluginFormatBadge(format: plugin.format)
+                    VStack(alignment: .trailing, spacing: 4) {
+                        PluginFormatBadge(format: plugin.format)
+                        UpdateStatusIndicator(
+                            installedVersion: plugin.currentVersion,
+                            latestVersion: manifestEntry?.latestVersion
+                        )
+                    }
                 }
 
                 Divider()

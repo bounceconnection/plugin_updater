@@ -217,6 +217,29 @@ final class AppState {
         }
     }
 
+    // MARK: - Export
+
+    func exportPluginListCSV() -> String {
+        let context = modelContainer.mainContext
+        let descriptor = FetchDescriptor<Plugin>(
+            predicate: #Predicate { !$0.isRemoved },
+            sortBy: [SortDescriptor(\.name)]
+        )
+        guard let plugins = try? context.fetch(descriptor) else { return "" }
+
+        var csv = "Name,Vendor,Format,Version,Bundle ID,Path\n"
+        for plugin in plugins {
+            let name = plugin.name.csvEscaped
+            let vendor = plugin.vendorName.csvEscaped
+            let format = plugin.format.displayName
+            let version = plugin.currentVersion
+            let bundleID = plugin.bundleIdentifier
+            let path = plugin.path.csvEscaped
+            csv += "\(name),\(vendor),\(format),\(version),\(bundleID),\(path)\n"
+        }
+        return csv
+    }
+
     // MARK: - Private
 
     private func enabledScanDirectories() throws -> [URL] {

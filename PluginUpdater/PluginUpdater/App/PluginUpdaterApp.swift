@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import AppKit
 
 @main
 struct PluginUpdaterApp: App {
@@ -37,6 +38,40 @@ struct PluginUpdaterApp: App {
                 .environment(appState)
         }
         .modelContainer(modelContainer)
+        .commands {
+            CommandGroup(after: .appInfo) {
+                Button("Scan Now") {
+                    Task { await appState.performScan() }
+                }
+                .keyboardShortcut("r", modifiers: [.command])
+                .disabled(appState.isScanning)
+
+                Button("Check for Updates") {
+                    Task { await appState.checkForUpdates() }
+                }
+                .keyboardShortcut("u", modifiers: [.command, .shift])
+                .disabled(appState.isScanning)
+
+                Divider()
+
+                Button("Export Plugin List…") {
+                    exportCSV()
+                }
+                .keyboardShortcut("e", modifiers: [.command, .shift])
+            }
+        }
+    }
+
+    @MainActor
+    private func exportCSV() {
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.commaSeparatedText]
+        panel.nameFieldStringValue = "plugins.csv"
+        panel.prompt = "Export"
+
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        let csv = appState.exportPluginListCSV()
+        try? csv.write(to: url, atomically: true, encoding: .utf8)
     }
 
     @MainActor
