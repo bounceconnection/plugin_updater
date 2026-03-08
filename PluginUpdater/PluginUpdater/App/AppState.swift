@@ -81,9 +81,10 @@ final class AppState {
 
     /// Uses VendorURLResolver to find URLs for plugins without download links.
     /// Tries: hardcoded overrides → plist URLs → reverse-domain → search fallback.
+    /// Deduplicates by vendor prefix and resolves in parallel batches.
     private func resolveVendorURLs(for plugins: [Plugin]) async {
-        // Deduplicate by bundleID prefix (2 parts) to avoid redundant HEAD requests
-        var resolved: Set<String> = []
+        // Group plugins by vendor prefix — only resolve once per vendor
+        var prefixToPlugins: [String: [(bundleID: String, version: String, vendor: String)]] = [:]
 
         for plugin in plugins {
             let bundleID = plugin.bundleIdentifier
@@ -93,39 +94,57 @@ final class AppState {
                 continue
             }
 
-            // Deduplicate by vendor domain to avoid checking the same site multiple times
             let prefix = bundleIDPrefix(bundleID)
-            guard !resolved.contains(prefix) else {
-                // Re-use the already-resolved URL for this prefix
-                if let siblingEntry = manifestEntries.first(where: {
-                    $0.key.hasPrefix(prefix) && $0.value.downloadURL != nil
-                }) {
-                    let existingEntry = manifestEntries[bundleID]
-                    manifestEntries[bundleID] = UpdateManifestEntry(
-                        bundleIdentifier: bundleID,
-                        latestVersion: existingEntry?.latestVersion ?? plugin.currentVersion,
-                        downloadURL: siblingEntry.value.downloadURL,
-                        releaseNotes: existingEntry?.releaseNotes,
-                        releaseDate: existingEntry?.releaseDate
-                    )
-                }
-                continue
-            }
-            resolved.insert(prefix)
-
-            let plistFields = scannedPlistFields[bundleID]
-            let url = await vendorURLResolver.resolve(
-                bundleID: bundleID,
-                plistFields: plistFields,
-                vendorName: plugin.vendorName
+            prefixToPlugins[prefix, default: []].append(
+                (bundleID: bundleID, version: plugin.currentVersion, vendor: plugin.vendorName)
             )
+        }
 
-            guard let url else { continue }
+        guard !prefixToPlugins.isEmpty else { return }
 
+        // Resolve one representative per vendor prefix, in parallel (bounded to 6)
+        let representatives = prefixToPlugins.map { (prefix: $0.key, plugins: $0.value) }
+
+        await withTaskGroup(of: (String, [String], String?).self) { group in
+            var inFlight = 0
+
+            for rep in representatives {
+                if inFlight >= 6 {
+                    if let result = await group.next() {
+                        applyResolvedURL(result.0, bundleIDs: result.1, url: result.2)
+                        inFlight -= 1
+                    }
+                }
+
+                let first = rep.plugins[0]
+                let allBundleIDs = rep.plugins.map(\.bundleID)
+                let plistFields = scannedPlistFields[first.bundleID]
+
+                group.addTask {
+                    let url = await self.vendorURLResolver.resolve(
+                        bundleID: first.bundleID,
+                        plistFields: plistFields,
+                        vendorName: first.vendor
+                    )
+                    return (rep.prefix, allBundleIDs, url)
+                }
+                inFlight += 1
+            }
+
+            for await result in group {
+                applyResolvedURL(result.0, bundleIDs: result.1, url: result.2)
+            }
+        }
+    }
+
+    /// Applies a resolved vendor URL to all plugins sharing the same vendor prefix.
+    private func applyResolvedURL(_ prefix: String, bundleIDs: [String], url: String?) {
+        guard let url else { return }
+        for bundleID in bundleIDs {
             let existingEntry = manifestEntries[bundleID]
             manifestEntries[bundleID] = UpdateManifestEntry(
                 bundleIdentifier: bundleID,
-                latestVersion: existingEntry?.latestVersion ?? plugin.currentVersion,
+                latestVersion: existingEntry?.latestVersion ?? "0.0.0",
                 downloadURL: url,
                 releaseNotes: existingEntry?.releaseNotes,
                 releaseDate: existingEntry?.releaseDate

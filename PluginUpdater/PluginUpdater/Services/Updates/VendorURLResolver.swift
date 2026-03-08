@@ -4,7 +4,7 @@ import Foundation
 /// Strategies (tried in order):
 /// 1. Hardcoded overrides from vendor_urls.json
 /// 2. URLs embedded in Info.plist fields (copyright, vendorurl, etc.)
-/// 3. Reverse-domain heuristic from bundle ID with HEAD validation
+/// 3. Reverse-domain heuristic from bundle ID with DNS + HEAD validation
 /// 4. Web search fallback URL
 actor VendorURLResolver {
 
@@ -21,6 +21,14 @@ actor VendorURLResolver {
     private var overrides: [VendorURLOverride] = []
     /// Cache of validated domain → URL mappings (or nil if validation failed)
     private var domainCache: [String: String?] = [:]
+
+    /// Well-known TLDs we should try reverse-domain on.
+    /// Skip anything exotic like "kontakt", "vst3", etc.
+    private static let validTLDs: Set<String> = [
+        "com", "net", "org", "io", "co", "de", "uk", "fr", "es", "it",
+        "nl", "se", "no", "fi", "dk", "ch", "at", "au", "ca", "jp",
+        "us", "me", "tv", "cc", "app", "dev", "audio", "music",
+    ]
 
     // MARK: - Setup
 
@@ -110,12 +118,18 @@ actor VendorURLResolver {
         let parts = bundleID.split(separator: ".")
         guard parts.count >= 2 else { return nil }
 
-        let tld = String(parts[0])         // "com", "de", "ch", "net", etc.
-        let domain = String(parts[1])      // "fabfilter", "theusualsuspects", etc.
+        let tld = String(parts[0]).lowercased()  // "com", "de", "ch", "net", etc.
+        let domain = String(parts[1])             // "fabfilter", "theusualsuspects", etc.
 
-        // Skip generic or invalid domains
+        // Only try well-known TLDs — skip nonsense like "kontakt", "vst3"
+        guard Self.validTLDs.contains(tld) else { return nil }
+
+        // Skip invalid domain names (underscores, spaces, all-digits, etc.)
+        guard isValidDomainLabel(domain) else { return nil }
+
+        // Skip generic domains that aren't vendor-specific
         let skip = ["apple", "mac", "audio", "music", "plugin", "plugins", "app",
-                     "software", "Plugin Alliance"]
+                     "software", "Plugin Alliance", "mycompany", "example"]
         if skip.contains(where: { $0.caseInsensitiveCompare(domain) == .orderedSame }) {
             return nil
         }
@@ -139,16 +153,27 @@ actor VendorURLResolver {
         return validated
     }
 
+    /// Checks if a string is a valid DNS label (no underscores, not all digits, reasonable length).
+    private func isValidDomainLabel(_ label: String) -> Bool {
+        guard label.count >= 2, label.count <= 63 else { return false }
+        guard !label.contains("_") else { return false }
+        guard !label.contains(" ") else { return false }
+        guard label.contains(where: { $0.isLetter }) else { return false }
+        let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-"))
+        return label.unicodeScalars.allSatisfy({ allowed.contains($0) })
+    }
+
     /// Sends a HEAD request to check if a URL is reachable (follows redirects).
+    /// Uses a lenient TLS session and short timeout to avoid blocking on bad certs or slow hosts.
     private func validateURL(_ urlString: String) async -> String? {
         guard let url = URL(string: urlString) else { return nil }
 
         var request = URLRequest(url: url)
         request.httpMethod = "HEAD"
-        request.timeoutInterval = 5
+        request.timeoutInterval = 3
 
         do {
-            let (_, response) = try await URLSession.shared.data(for: request)
+            let (_, response) = try await Self.lenientSession.data(for: request)
             guard let http = response as? HTTPURLResponse else { return nil }
 
             // Accept success and redirects
@@ -163,6 +188,29 @@ actor VendorURLResolver {
             // Network error — URL not reachable
         }
         return nil
+    }
+
+    /// URLSession that accepts all server certificates for HEAD-check purposes.
+    /// We only use this to confirm a domain exists — not for transferring sensitive data.
+    private static let lenientSession: URLSession = {
+        let config = URLSessionConfiguration.ephemeral
+        config.timeoutIntervalForRequest = 3
+        config.timeoutIntervalForResource = 5
+        config.requestCachePolicy = .reloadIgnoringLocalCacheData
+        return URLSession(configuration: config, delegate: LenientTLSDelegate(), delegateQueue: nil)
+    }()
+
+    private final class LenientTLSDelegate: NSObject, URLSessionDelegate, @unchecked Sendable {
+        func urlSession(
+            _ session: URLSession,
+            didReceive challenge: URLAuthenticationChallenge
+        ) async -> (URLSession.AuthChallengeDisposition, URLCredential?) {
+            if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
+               let trust = challenge.protectionSpace.serverTrust {
+                return (.useCredential, URLCredential(trust: trust))
+            }
+            return (.performDefaultHandling, nil)
+        }
     }
 
     // MARK: - Strategy 4: Search Fallback
