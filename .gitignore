@@ -12,5 +12,8 @@ DerivedData/
 .swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
 .swiftpm/xcode/xcuserdata/
 
+# Build artifacts
+build/
+
 # Claude
 .claude/
