@@ -179,4 +179,216 @@ struct PluginHideTests {
         let hiddenCount = refetched.filter { $0.isHidden }.count
         #expect(hiddenCount == 2)
     }
+
+    // MARK: - Reconciler preserves isHidden
+
+    private func makeMetadata(
+        name: String = "TestPlugin",
+        bundleID: String = "com.test.plugin",
+        version: String = "1.0.0",
+        format: PluginFormat = .vst3,
+        vendor: String = "TestVendor"
+    ) -> PluginMetadata {
+        PluginMetadata(
+            url: URL(fileURLWithPath: "/Library/Audio/Plug-Ins/VST3/\(name).vst3"),
+            format: format,
+            name: name,
+            bundleIdentifier: bundleID,
+            version: version,
+            vendorName: vendor,
+            audioComponentName: nil,
+            copyright: nil,
+            getInfoString: nil,
+            bundleIDDomain: nil,
+            parentDirectory: "VST3",
+            plistFields: [:]
+        )
+    }
+
+    @Test("Reconciler preserves isHidden when plugin version updates")
+    func reconcilerPreservesHiddenOnUpdate() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let plugin = Plugin(
+            name: "HiddenSynth",
+            bundleIdentifier: "com.test.hiddensynth",
+            format: .vst3,
+            currentVersion: "1.0.0",
+            path: "/Library/Audio/Plug-Ins/VST3/HiddenSynth.vst3",
+            isHidden: true
+        )
+        context.insert(plugin)
+        try context.save()
+
+        // Reconcile with a newer version
+        let reconciler = PluginReconciler(modelContainer: container)
+        let scanned = [makeMetadata(name: "HiddenSynth", bundleID: "com.test.hiddensynth", version: "2.0.0")]
+        let result = try await reconciler.reconcile(scannedPlugins: scanned)
+
+        #expect(result.updatedPlugins == 1)
+
+        // isHidden must still be true after reconciliation
+        let freshContext = ModelContext(container)
+        let plugins = try freshContext.fetch(FetchDescriptor<Plugin>())
+        #expect(plugins.first?.isHidden == true)
+        #expect(plugins.first?.currentVersion == "2.0.0")
+    }
+
+    @Test("Reconciler preserves isHidden when plugin reappears")
+    func reconcilerPreservesHiddenOnReappear() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let plugin = Plugin(
+            name: "HiddenSynth",
+            bundleIdentifier: "com.test.hiddensynth",
+            format: .vst3,
+            currentVersion: "1.0.0",
+            path: "/Library/Audio/Plug-Ins/VST3/HiddenSynth.vst3",
+            isRemoved: true,
+            isHidden: true
+        )
+        context.insert(plugin)
+        try context.save()
+
+        // Plugin reappears in scan
+        let reconciler = PluginReconciler(modelContainer: container)
+        let scanned = [makeMetadata(name: "HiddenSynth", bundleID: "com.test.hiddensynth", version: "1.0.0")]
+        _ = try await reconciler.reconcile(scannedPlugins: scanned)
+
+        let freshContext = ModelContext(container)
+        let plugins = try freshContext.fetch(FetchDescriptor<Plugin>())
+        #expect(plugins.first?.isRemoved == false)
+        #expect(plugins.first?.isHidden == true) // hidden status preserved
+    }
+
+    @Test("Reconciler preserves isHidden when plugin is soft-deleted")
+    func reconcilerPreservesHiddenOnRemove() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let plugin = Plugin(
+            name: "HiddenSynth",
+            bundleIdentifier: "com.test.hiddensynth",
+            format: .vst3,
+            currentVersion: "1.0.0",
+            path: "/Library/Audio/Plug-Ins/VST3/HiddenSynth.vst3",
+            isHidden: true
+        )
+        context.insert(plugin)
+        try context.save()
+
+        // Empty scan — plugin disappears
+        let reconciler = PluginReconciler(modelContainer: container)
+        _ = try await reconciler.reconcile(scannedPlugins: [])
+
+        let freshContext = ModelContext(container)
+        let plugins = try freshContext.fetch(FetchDescriptor<Plugin>())
+        #expect(plugins.first?.isRemoved == true)
+        #expect(plugins.first?.isHidden == true) // hidden status preserved
+    }
+
+    // MARK: - Dashboard filtering logic
+
+    @Test("Hidden plugins excluded from visible count and format count")
+    func hiddenExcludedFromCounts() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let visible1 = Plugin(name: "VST A", bundleIdentifier: "com.a", format: .vst3, currentVersion: "1.0", path: "/a.vst3")
+        let visible2 = Plugin(name: "VST B", bundleIdentifier: "com.b", format: .vst3, currentVersion: "1.0", path: "/b.vst3")
+        let hiddenVST = Plugin(name: "VST C", bundleIdentifier: "com.c", format: .vst3, currentVersion: "1.0", path: "/c.vst3", isHidden: true)
+        let visibleAU = Plugin(name: "AU A", bundleIdentifier: "com.d", format: .au, currentVersion: "1.0", path: "/d.component")
+        let removedPlugin = Plugin(name: "Removed", bundleIdentifier: "com.e", format: .vst3, currentVersion: "1.0", path: "/e.vst3", isRemoved: true)
+
+        for p in [visible1, visible2, hiddenVST, visibleAU, removedPlugin] { context.insert(p) }
+        try context.save()
+
+        // Simulate DashboardView's query: !isRemoved
+        let nonRemoved = FetchDescriptor<Plugin>(predicate: #Predicate { !$0.isRemoved })
+        let plugins = try context.fetch(nonRemoved)
+
+        // visibleCount: non-hidden among non-removed
+        let visibleCount = plugins.filter { !$0.isHidden }.count
+        #expect(visibleCount == 3) // VST A, VST B, AU A
+
+        // hiddenCount: hidden among non-removed
+        let hiddenCount = plugins.filter { $0.isHidden }.count
+        #expect(hiddenCount == 1) // VST C
+
+        // pluginCount(for: .vst3): non-hidden, non-removed, vst3
+        let vst3Count = plugins.filter { !$0.isHidden && $0.format == .vst3 }.count
+        #expect(vst3Count == 2) // VST A, VST B (not hidden VST C, not removed)
+
+        let auCount = plugins.filter { !$0.isHidden && $0.format == .au }.count
+        #expect(auCount == 1)
+    }
+
+    @Test("Hidden filter shows only hidden non-removed plugins")
+    func hiddenFilterShowsOnlyHidden() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let visible = Plugin(name: "Visible", bundleIdentifier: "com.a", format: .vst3, currentVersion: "1.0", path: "/a.vst3")
+        let hidden = Plugin(name: "Hidden", bundleIdentifier: "com.b", format: .au, currentVersion: "1.0", path: "/b.component", isHidden: true)
+        let hiddenAndRemoved = Plugin(name: "HiddenRemoved", bundleIdentifier: "com.c", format: .clap, currentVersion: "1.0", path: "/c.clap", isRemoved: true, isHidden: true)
+
+        for p in [visible, hidden, hiddenAndRemoved] { context.insert(p) }
+        try context.save()
+
+        // DashboardView sidebar .hidden filter: isHidden && !isRemoved
+        let nonRemoved = FetchDescriptor<Plugin>(predicate: #Predicate { !$0.isRemoved })
+        let plugins = try context.fetch(nonRemoved)
+        let hiddenResults = plugins.filter { $0.isHidden }
+
+        #expect(hiddenResults.count == 1)
+        #expect(hiddenResults[0].name == "Hidden")
+    }
+
+    @Test("Search filtering respects hidden state")
+    func searchRespectsHiddenState() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let visibleSerum = Plugin(name: "Serum", bundleIdentifier: "com.xfer.serum", format: .vst3, currentVersion: "1.35", path: "/serum.vst3")
+        let hiddenSerum = Plugin(name: "Serum FX", bundleIdentifier: "com.xfer.serumfx", format: .vst3, currentVersion: "1.35", path: "/serumfx.vst3", isHidden: true)
+
+        for p in [visibleSerum, hiddenSerum] { context.insert(p) }
+        try context.save()
+
+        let nonRemoved = FetchDescriptor<Plugin>(predicate: #Predicate { !$0.isRemoved })
+        let plugins = try context.fetch(nonRemoved)
+
+        // Simulate "All" sidebar + "Serum" search (dashboard filters out hidden first)
+        let searchText = "Serum"
+        let visibleResults = plugins
+            .filter { !$0.isHidden }
+            .filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+        #expect(visibleResults.count == 1)
+        #expect(visibleResults[0].name == "Serum")
+
+        // Simulate "Hidden" sidebar + "Serum" search (dashboard shows hidden)
+        let hiddenResults = plugins
+            .filter { $0.isHidden }
+            .filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+        #expect(hiddenResults.count == 1)
+        #expect(hiddenResults[0].name == "Serum FX")
+    }
+
+    @Test("Newly reconciled plugins default to not hidden")
+    func newPluginsNotHidden() async throws {
+        let container = try makeContainer()
+        let reconciler = PluginReconciler(modelContainer: container)
+
+        let scanned = [
+            makeMetadata(name: "NewPlugin", bundleID: "com.new.plugin", version: "1.0.0"),
+        ]
+        _ = try await reconciler.reconcile(scannedPlugins: scanned)
+
+        let context = ModelContext(container)
+        let plugins = try context.fetch(FetchDescriptor<Plugin>())
+        #expect(plugins.count == 1)
+        #expect(plugins.first?.isHidden == false)
+    }
 }

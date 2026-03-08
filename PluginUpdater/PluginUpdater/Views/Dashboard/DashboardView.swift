@@ -26,6 +26,16 @@ struct PluginRow: Identifiable {
     var hasDownload: Int { downloadURL != nil ? 1 : 0 }
 }
 
+/// All sidebar badge counts computed in a single pass over the plugins array.
+private struct SidebarCounts {
+    var visible = 0
+    var hidden = 0
+    var updates = 0
+    var formatCounts: [PluginFormat: Int] = [:]
+
+    func count(for format: PluginFormat) -> Int { formatCounts[format, default: 0] }
+}
+
 @MainActor
 struct DashboardView: View {
     @Environment(AppState.self) private var appState
@@ -39,7 +49,28 @@ struct DashboardView: View {
     @State private var selectedPluginID: PersistentIdentifier?
     @State private var showInspector = false
 
-    private var filteredRows: [PluginRow] {
+    // MARK: - Computed helpers
+
+    /// Single-pass sidebar counts — replaces 6+ separate filter iterations.
+    private func computeSidebarCounts(manifest: [String: UpdateManifestEntry]) -> SidebarCounts {
+        var c = SidebarCounts()
+        for plugin in plugins {
+            if plugin.isHidden {
+                c.hidden += 1
+            } else {
+                c.visible += 1
+                c.formatCounts[plugin.format, default: 0] += 1
+                if let entry = manifest[plugin.bundleIdentifier],
+                   entry.latestVersion.isNewerVersion(than: plugin.currentVersion) {
+                    c.updates += 1
+                }
+            }
+        }
+        return c
+    }
+
+    /// Filtered + sorted rows for the Table, computed once per body evaluation.
+    private func computeRows(manifest: [String: UpdateManifestEntry]) -> [PluginRow] {
         var result = plugins
 
         if sidebarSelection == .hidden {
@@ -53,7 +84,7 @@ struct DashboardView: View {
                 result = result.filter { $0.format == format }
             case .updatesAvailable:
                 result = result.filter { plugin in
-                    guard let entry = appState.manifestEntries[plugin.bundleIdentifier] else { return false }
+                    guard let entry = manifest[plugin.bundleIdentifier] else { return false }
                     return entry.latestVersion.isNewerVersion(than: plugin.currentVersion)
                 }
             case .hidden:
@@ -69,7 +100,6 @@ struct DashboardView: View {
         }
 
         let rows = result.map { plugin -> PluginRow in
-            let manifest = appState.manifestEntries
             if let entry = manifest[plugin.bundleIdentifier] {
                 let hasUpdate = entry.latestVersion.isNewerVersion(than: plugin.currentVersion)
                 return PluginRow(plugin: plugin, availableVersion: entry.latestVersion, hasUpdate: hasUpdate, downloadURL: entry.downloadURL)
@@ -78,22 +108,6 @@ struct DashboardView: View {
         }
 
         return rows.sorted(using: sortOrder)
-    }
-
-    private var visibleCount: Int {
-        plugins.filter { !$0.isHidden }.count
-    }
-
-    private var hiddenCount: Int {
-        plugins.filter { $0.isHidden }.count
-    }
-
-    private var updatesCount: Int {
-        plugins.filter { plugin in
-            guard !plugin.isHidden else { return false }
-            guard let entry = appState.manifestEntries[plugin.bundleIdentifier] else { return false }
-            return entry.latestVersion.isNewerVersion(than: plugin.currentVersion)
-        }.count
     }
 
     private var statusSubtitle: String {
@@ -110,10 +124,6 @@ struct DashboardView: View {
         return plugins.first { $0.id == id }
     }
 
-    private func pluginCount(for format: PluginFormat) -> Int {
-        plugins.filter { !$0.isHidden && $0.format == format }.count
-    }
-
     private func setHidden(_ hidden: Bool, for ids: Set<PersistentIdentifier>) {
         for id in ids {
             if let plugin = plugins.first(where: { $0.id == id }) {
@@ -123,24 +133,31 @@ struct DashboardView: View {
         try? modelContext.save()
     }
 
+    // MARK: - Body
+
     var body: some View {
+        // Compute once per body evaluation — reused by Table, overlay, and sidebar.
+        let manifest = appState.manifestEntries
+        let counts = computeSidebarCounts(manifest: manifest)
+        let rows = computeRows(manifest: manifest)
+
         NavigationSplitView {
             List(selection: $sidebarSelection) {
-                Label("All (\(visibleCount))", systemImage: "music.note.list")
+                Label("All (\(counts.visible))", systemImage: "music.note.list")
                     .tag(SidebarFilter.all)
-                if updatesCount > 0 {
-                    Label("Updates Available (\(updatesCount))", systemImage: "arrow.up.circle.fill")
+                if counts.updates > 0 {
+                    Label("Updates Available (\(counts.updates))", systemImage: "arrow.up.circle.fill")
                         .tag(SidebarFilter.updatesAvailable)
                         .foregroundStyle(.green)
                 }
                 Section("Formats") {
                     ForEach(PluginFormat.allCases) { format in
-                        Label("\(format.displayName) (\(pluginCount(for: format)))", systemImage: "puzzlepiece.extension")
+                        Label("\(format.displayName) (\(counts.count(for: format)))", systemImage: "puzzlepiece.extension")
                             .tag(SidebarFilter.format(format))
                     }
                 }
                 Section("Manage") {
-                    Label("Hidden (\(hiddenCount))", systemImage: "eye.slash")
+                    Label("Hidden (\(counts.hidden))", systemImage: "eye.slash")
                         .tag(SidebarFilter.hidden)
                 }
             }
@@ -153,7 +170,7 @@ struct DashboardView: View {
                     .padding(16)
             }
         } detail: {
-            Table(filteredRows, selection: $selectedPluginID, sortOrder: $sortOrder) {
+            Table(rows, selection: $selectedPluginID, sortOrder: $sortOrder) {
                 TableColumn("Name", value: \PluginRow.name) { (row: PluginRow) in
                     Text(row.name)
                 }
@@ -187,6 +204,9 @@ struct DashboardView: View {
                 }
                 .width(min: 50, ideal: 70, max: 90)
             }
+            // Prevent SwiftUI from animating hundreds of row insertions/removals
+            // when switching sidebar filters or clearing search text.
+            .transaction { $0.disablesAnimations = true }
             .contextMenu(forSelectionType: PersistentIdentifier.self) { ids in
                 if !ids.isEmpty {
                     if sidebarSelection == .hidden {
@@ -203,9 +223,9 @@ struct DashboardView: View {
             .overlay {
                 if plugins.isEmpty && !appState.isScanning {
                     ContentUnavailableView("No Plugins Found", systemImage: "puzzlepiece.extension", description: Text("Run a scan to discover your audio plugins."))
-                } else if filteredRows.isEmpty && !debouncedSearchText.isEmpty {
+                } else if rows.isEmpty && !debouncedSearchText.isEmpty {
                     ContentUnavailableView.search(text: debouncedSearchText)
-                } else if filteredRows.isEmpty && sidebarSelection == .hidden {
+                } else if rows.isEmpty && sidebarSelection == .hidden {
                     ContentUnavailableView("No Hidden Plugins", systemImage: "eye.slash", description: Text("Right-click a plugin and choose Hide to hide it here."))
                 }
             }
@@ -254,10 +274,15 @@ struct DashboardView: View {
             }
             .onChange(of: searchText) { _, newValue in
                 searchTask?.cancel()
-                searchTask = Task {
-                    try? await Task.sleep(nanoseconds: 200_000_000)
-                    if !Task.isCancelled {
-                        debouncedSearchText = newValue
+                if newValue.isEmpty {
+                    // Clear immediately — no point debouncing an empty string
+                    debouncedSearchText = ""
+                } else {
+                    searchTask = Task {
+                        try? await Task.sleep(nanoseconds: 300_000_000)
+                        if !Task.isCancelled {
+                            debouncedSearchText = newValue
+                        }
                     }
                 }
             }
