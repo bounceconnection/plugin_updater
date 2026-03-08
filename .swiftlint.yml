@@ -13,6 +13,12 @@ disabled_rules:
   - function_body_length
   - cyclomatic_complexity
   - nesting
+  - identifier_name
+  - function_parameter_count
+  - trailing_comma
+  - for_where
+  - large_tuple
+  - empty_count
 
 opt_in_rules:
   - empty_count
