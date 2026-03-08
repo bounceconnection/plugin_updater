@@ -31,6 +31,7 @@
 		8ECAB3C9ED34D1868CCF7FB7 /* VersionHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF0DAA61F5C1D3CA587AF319 /* VersionHistoryView.swift */; };
 		9E34A902CB91B58410878005 /* PluginFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50B2F733E2F4A6FA4BFC9282 /* PluginFormat.swift */; };
 		A0789214418FC09BCFFA1A08 /* PluginDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C050396835BD7F636548ACE /* PluginDetailView.swift */; };
+		A4F965356550E03BE2D1254D /* AssetNamesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5642C14BB4CA023226BC86AA /* AssetNamesTests.swift */; };
 		A709FEEA68B7E388F1A5AAFD /* VendorLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68BBAABB4C7CF313F0C5E8E0 /* VendorLink.swift */; };
 		AE39E1893F3995A0372E46C8 /* UpdateStatusIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B2A40B95918D92D1FAEB0BC /* UpdateStatusIndicator.swift */; };
 		B49D299B461F137CCE71320E /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27AD453D9B6930C4A3717BED /* NotificationManager.swift */; };
@@ -88,6 +89,7 @@
 		48945FF5154578D9FA574F84 /* PluginReconciler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginReconciler.swift; sourceTree = "<group>"; };
 		4CEFE78622876A9694BD75A3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		50B2F733E2F4A6FA4BFC9282 /* PluginFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginFormat.swift; sourceTree = "<group>"; };
+		5642C14BB4CA023226BC86AA /* AssetNamesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetNamesTests.swift; sourceTree = "<group>"; };
 		5C11DF638C0C66FA77CD533E /* AvailableVersionCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvailableVersionCell.swift; sourceTree = "<group>"; };
 		5C33FFFC7417CE4C6FC7FF12 /* PluginImageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginImageService.swift; sourceTree = "<group>"; };
 		5CE6380DB266015098CA2F47 /* URLExtensionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLExtensionTests.swift; sourceTree = "<group>"; };
@@ -160,11 +162,12 @@
 			path = Utilities;
 			sourceTree = "<group>";
 		};
-		380D6362DC113F72A7F36396 /* Mocks */ = {
+		422E98828C8899DF10341858 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				5642C14BB4CA023226BC86AA /* AssetNamesTests.swift */,
 			);
-			path = Mocks;
+			path = Utilities;
 			sourceTree = "<group>";
 		};
 		465617638B16C1A39BD1BAC2 /* Views */ = {
@@ -250,9 +253,9 @@
 		77F02EF83B9CC6DBD9443868 /* PluginUpdaterTests */ = {
 			isa = PBXGroup;
 			children = (
-				380D6362DC113F72A7F36396 /* Mocks */,
 				78FE303BA9B6455714F5405E /* Models */,
 				4B79FF31AD704FCEE3410494 /* Services */,
+				422E98828C8899DF10341858 /* Utilities */,
 				465617638B16C1A39BD1BAC2 /* Views */,
 			);
 			path = PluginUpdaterTests;
@@ -510,6 +513,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A4F965356550E03BE2D1254D /* AssetNamesTests.swift in Sources */,
 				F3C6BA58672FB61A3F52CA11 /* BundleMetadataExtractorTests.swift in Sources */,
 				D9D1FC24E55250860FF6AA5D /* PersistenceControllerTests.swift in Sources */,
 				3B77607C97AEA365C179293C /* PluginFormatTests.swift in Sources */,
