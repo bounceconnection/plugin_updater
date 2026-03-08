@@ -25,6 +25,16 @@ A native macOS app that scans your installed audio plugins (VST3, AU, CLAP), tra
 
 ## Installation
 
+### Download the Installer (easiest)
+
+Download the latest **`.pkg` installer** from the [Releases page](https://github.com/bounceconnection/plugin-updater/releases):
+
+1. Download `PluginUpdater-<version>.pkg`.
+2. Double-click the file to launch the macOS Installer.
+3. Follow the prompts — the app is installed to `/Applications`.
+
+> **Gatekeeper note:** Builds from GitHub Actions are unsigned. If macOS blocks the installer, right-click the `.pkg` → **Open** → **Open** to proceed.
+
 ### Build from Source
 
 1. Clone the repository:
@@ -44,6 +54,15 @@ A native macOS app that scans your installed audio plugins (VST3, AU, CLAP), tra
    open PluginUpdater.xcodeproj
    ```
    Then press **Cmd+R** to build and run.
+
+### Build the .pkg Installer Locally
+
+```bash
+# Requires Xcode command-line tools and xcodegen
+brew install xcodegen
+./scripts/build-installer.sh
+# Output: build/PluginUpdater-1.0.0.pkg
+```
 
 ### Alternative: Swift Package Manager
 
