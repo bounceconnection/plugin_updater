@@ -144,4 +144,26 @@ struct VersionParserTests {
         #expect("1.35b2".compareVersion(to: "1.35") == .orderedSame) // non-numeric suffix dropped
         #expect("V10.0.0".isNewerVersion(than: "9.9.9"))
     }
+
+    // MARK: - csvEscaped
+
+    @Test("Plain string is not escaped")
+    func csvPlainString() {
+        #expect("hello".csvEscaped == "hello")
+    }
+
+    @Test("String with comma is quoted")
+    func csvComma() {
+        #expect("hello, world".csvEscaped == "\"hello, world\"")
+    }
+
+    @Test("String with quotes is double-quoted")
+    func csvQuotes() {
+        #expect("say \"hi\"".csvEscaped == "\"say \"\"hi\"\"\"")
+    }
+
+    @Test("String with newline is quoted")
+    func csvNewline() {
+        #expect("line1\nline2".csvEscaped == "\"line1\nline2\"")
+    }
 }
