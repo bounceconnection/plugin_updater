@@ -1,0 +1,45 @@
+name: Implement Issue
+
+on:
+  issues:
+    types: [opened, labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  implement:
+    if: contains(github.event.issue.labels.*.name, 'claude')
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            You are working on PluginUpdater, a native macOS SwiftUI app for managing audio plugin updates (VST3, AU, CLAP).
+
+            A GitHub issue has been filed above. Your job:
+
+            1. Read and understand the issue thoroughly (it may be a feature request, bug fix, enhancement, etc.)
+            2. Plan the implementation — identify which files need changes and what the approach should be
+            3. Implement the changes with clean, minimal code
+            4. Make sure the project builds: run `cd PluginUpdater && swift build`
+            5. Run tests to verify nothing is broken: `cd PluginUpdater && swift test`
+            6. If you added or removed source files, regenerate the Xcode project: `cd PluginUpdater && xcodegen generate`
+            7. Create a PR with a clear summary linking back to this issue using "Closes #<issue_number>"
+
+            Key project details:
+            - Swift/SwiftUI, SwiftData, macOS 14+, no third-party dependencies
+            - Build: `cd PluginUpdater && swift build` / `swift test`
+            - Xcode project: `cd PluginUpdater && xcodegen generate` (run if you add/remove files)
+            - Views are in PluginUpdater/PluginUpdater/Views/
+            - Services in PluginUpdater/PluginUpdater/Services/
+            - Models in PluginUpdater/PluginUpdater/Models/
+            - Resources (JSON configs, assets) in PluginUpdater/PluginUpdater/Resources/
+          claude_args: "--model claude-sonnet-4-6"
