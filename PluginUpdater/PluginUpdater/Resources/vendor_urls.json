@@ -65,5 +65,6 @@
   {"bundle_id_prefix": "com.ALMCo", "url": "https://www.saintleo.audio/"},
   {"bundle_id_prefix": "com.lusid", "url": "https://lusidmusic.com/"},
   {"bundle_id_prefix": "com.temeculadsp", "url": "https://temeculadsp.com/"},
-  {"bundle_id_prefix": "com.SPC", "url": "https://www.spcplugins.com/"}
+  {"bundle_id_prefix": "com.SPC", "url": "https://www.spcplugins.com/"},
+  {"bundle_id_prefix": "com.theusualsuspects", "url": "https://dsp56300.wordpress.com/category/downloads/"}
 ]

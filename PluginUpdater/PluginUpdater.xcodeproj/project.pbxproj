@@ -20,6 +20,7 @@
 		424E33F6164C2AC0F13DC754 /* PluginScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0075A029C426D72E02843DB /* PluginScanner.swift */; };
 		5AC8E361BC1A63D3672BA750 /* vendor_urls.json in Resources */ = {isa = PBXBuildFile; fileRef = BE724FF345F7369F4059BB6E /* vendor_urls.json */; };
 		5EC118195278CECA9A597B86 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC93F8EF57BA9A0FD9879280 /* AppState.swift */; };
+		672E54C5CE4EBBA486DA3D1A /* PluginImageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C33FFFC7417CE4C6FC7FF12 /* PluginImageService.swift */; };
 		676BD62C9C7651D4D040103F /* AvailableVersionCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C11DF638C0C66FA77CD533E /* AvailableVersionCell.swift */; };
 		6CAB8E41AF6C5406489BF843 /* UpdateStatusIndicatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C4F86DC778100292C275751 /* UpdateStatusIndicatorTests.swift */; };
 		7341AFB665F38EDA0DD89450 /* ManifestManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB464ABB49A24F29E6CF5654 /* ManifestManager.swift */; };
@@ -85,8 +86,10 @@
 		3E9D30986AADC09D953814BE /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		443F8EF8565B79D25D4658BE /* String+Version.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Version.swift"; sourceTree = "<group>"; };
 		48945FF5154578D9FA574F84 /* PluginReconciler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginReconciler.swift; sourceTree = "<group>"; };
+		4CEFE78622876A9694BD75A3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		50B2F733E2F4A6FA4BFC9282 /* PluginFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginFormat.swift; sourceTree = "<group>"; };
 		5C11DF638C0C66FA77CD533E /* AvailableVersionCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvailableVersionCell.swift; sourceTree = "<group>"; };
+		5C33FFFC7417CE4C6FC7FF12 /* PluginImageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginImageService.swift; sourceTree = "<group>"; };
 		5CE6380DB266015098CA2F47 /* URLExtensionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLExtensionTests.swift; sourceTree = "<group>"; };
 		5DBDCA9E8EEA702794CA532A /* VendorResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VendorResolverTests.swift; sourceTree = "<group>"; };
 		613B2B7BA5C37C8E758A0BF9 /* VendorInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VendorInfo.swift; sourceTree = "<group>"; };
@@ -136,6 +139,7 @@
 		16E512DED25F8B04EEF01253 /* PluginUpdater */ = {
 			isa = PBXGroup;
 			children = (
+				4CEFE78622876A9694BD75A3 /* Info.plist */,
 				8A76A6D01E0000F16BC1BA92 /* PluginUpdater.entitlements */,
 				6E9FA46DBC2B5A74133ED227 /* App */,
 				C5F74C4848B26F5B4EE7FB8D /* Models */,
@@ -276,6 +280,7 @@
 		893BCC1E237B639D99E31C8A /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				5C33FFFC7417CE4C6FC7FF12 /* PluginImageService.swift */,
 				EF9C600E5ADDDA376C7FF39B /* Monitoring */,
 				B2F83BBB422C057AA52DEF0B /* Notifications */,
 				4DBF5A276EB701F43A30D3CD /* Persistence */,
@@ -480,6 +485,7 @@
 				A0789214418FC09BCFFA1A08 /* PluginDetailView.swift in Sources */,
 				9E34A902CB91B58410878005 /* PluginFormat.swift in Sources */,
 				C3C4D4DD4EDB0D265BF124A2 /* PluginFormatBadge.swift in Sources */,
+				672E54C5CE4EBBA486DA3D1A /* PluginImageService.swift in Sources */,
 				DE50686CF90D72FE5067B057 /* PluginReconciler.swift in Sources */,
 				424E33F6164C2AC0F13DC754 /* PluginScanner.swift in Sources */,
 				E36F62F52B778306706E170D /* PluginUpdaterApp.swift in Sources */,
@@ -542,6 +548,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PluginUpdater/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Plugin Updater";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSUIElement = NO;
@@ -587,6 +594,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PluginUpdater/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Plugin Updater";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSUIElement = NO;

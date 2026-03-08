@@ -33,6 +33,8 @@ targets:
         ENABLE_HARDENED_RUNTIME: YES
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         CODE_SIGN_STYLE: Automatic
+    info:
+      path: PluginUpdater/Info.plist
 
   PluginUpdaterTests:
     type: bundle.unit-test

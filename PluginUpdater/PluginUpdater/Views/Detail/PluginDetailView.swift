@@ -6,6 +6,9 @@ struct PluginDetailView: View {
     let plugin: Plugin
     let manifest: [String: UpdateManifestEntry]
 
+    @State private var pluginImage: NSImage?
+    @State private var imageLoaded = false
+
     private var manifestEntry: UpdateManifestEntry? {
         manifest[plugin.bundleIdentifier]
     }
@@ -32,6 +35,34 @@ struct PluginDetailView: View {
                             latestVersion: manifestEntry?.latestVersion
                         )
                     }
+                }
+
+                // Plugin image (loaded async from bundle or web)
+                HStack {
+                    Spacer()
+                    if let pluginImage {
+                        Image(nsImage: pluginImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(maxWidth: 280, maxHeight: 200)
+                            .cornerRadius(8)
+                            .shadow(radius: 3)
+                    } else if imageLoaded {
+                        VStack(spacing: 6) {
+                            Image(systemName: "photo")
+                                .font(.title2)
+                                .foregroundStyle(.tertiary)
+                            Text("No image found")
+                                .font(.caption)
+                                .foregroundStyle(.tertiary)
+                        }
+                        .frame(height: 60)
+                    } else {
+                        ProgressView()
+                            .controlSize(.small)
+                            .frame(height: 60)
+                    }
+                    Spacer()
                 }
 
                 Divider()
@@ -89,6 +120,18 @@ struct PluginDetailView: View {
                 VersionHistoryView(versions: plugin.versionHistory)
             }
             .padding()
+        }
+        .task(id: plugin.id) {
+            pluginImage = nil
+            imageLoaded = false
+            pluginImage = await PluginImageService.shared.image(
+                pluginName: plugin.name,
+                vendorName: plugin.vendorName,
+                bundleID: plugin.bundleIdentifier,
+                pluginPath: plugin.path,
+                vendorURL: manifestEntry?.downloadURL
+            )
+            imageLoaded = true
         }
     }
 }
