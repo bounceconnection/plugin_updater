@@ -54,4 +54,4 @@ jobs:
             - Models in PluginUpdater/PluginUpdater/Models/
             - Tests in PluginUpdater/PluginUpdaterTests/
             - Resources (JSON configs, assets) in PluginUpdater/PluginUpdater/Resources/
-          claude_args: "--model claude-sonnet-4-6"
+          claude_args: "--model claude-sonnet-4-6 --allowedTools 'Bash(git:*)' 'Bash(swift:*)' 'Bash(xcodegen:*)' 'Bash(gh:*)' 'Bash(ls:*)' 'Bash(mkdir:*)' 'Bash(cp:*)' 'Bash(mv:*)' 'Bash(cat:*)' 'Bash(cd:*)' 'Edit' 'Write' 'Read' 'Glob' 'Grep'"
