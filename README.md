@@ -1,6 +1,6 @@
 # Plugin Updater
 
-A native macOS app that scans your installed audio plugins (VST3, AU, CLAP), tracks their versions, and automatically checks for available updates via the Homebrew Formulae API.
+*Plugin Updater* scans all your installed audio plugins (VST3, AU, CLAP), tracks their versions, and automatically checks for available updates.
 
 ![Dashboard](screenshots/dashboard.png)
 
