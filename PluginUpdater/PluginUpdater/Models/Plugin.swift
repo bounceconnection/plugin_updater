@@ -13,6 +13,10 @@ final class Plugin {
     var lastSeenDate: Date
     var isRemoved: Bool
     var isHidden: Bool = false
+    /// Comma-separated architecture raw values (e.g. "arm64,x86_64").
+    var architecturesRaw: String = ""
+    var fileSize: Int64 = 0
+    var fileCreationDate: Date?
 
     @Relationship(deleteRule: .cascade, inverse: \PluginVersion.plugin)
     var versionHistory: [PluginVersion]
@@ -47,5 +51,26 @@ final class Plugin {
 
     var pathURL: URL {
         URL(fileURLWithPath: path)
+    }
+
+    /// Parsed CPU architectures from the raw string.
+    var architectures: [CPUArchitecture] {
+        get {
+            guard !architecturesRaw.isEmpty else { return [] }
+            return architecturesRaw.split(separator: ",").compactMap { CPUArchitecture(rawValue: String($0)) }
+        }
+        set {
+            architecturesRaw = newValue.map(\.rawValue).joined(separator: ",")
+        }
+    }
+
+    /// Human-readable architecture display string.
+    var architectureDisplayString: String {
+        architectures.displayString
+    }
+
+    /// Whether the plugin uses a legacy architecture (i386, PPC).
+    var isLegacyArchitecture: Bool {
+        architectures.isLegacy
     }
 }

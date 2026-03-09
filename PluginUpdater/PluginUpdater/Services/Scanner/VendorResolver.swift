@@ -68,6 +68,11 @@ enum VendorResolver {
             s = String(s[match.upperBound...])
         }
 
+        // Remove trailing year patterns like " 2024" or ", 2021"
+        if let match = s.range(of: #"[\s,\-]+\d{4}$"#, options: .regularExpression) {
+            s = String(s[..<match.lowerBound])
+        }
+
         // Remove trailing "All Rights Reserved" and similar
         let suffixes = ["all rights reserved", "all rights reserved.", "inc.", "inc", "llc.", "llc", "ltd.", "ltd", "gmbh"]
         for suffix in suffixes {

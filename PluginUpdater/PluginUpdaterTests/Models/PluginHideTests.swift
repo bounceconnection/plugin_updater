@@ -201,7 +201,10 @@ struct PluginHideTests {
             getInfoString: nil,
             bundleIDDomain: nil,
             parentDirectory: "VST3",
-            plistFields: [:]
+            plistFields: [:],
+            architectures: [.arm64, .x86_64],
+            fileSize: 1024,
+            fileCreationDate: nil
         )
     }
 
