@@ -51,6 +51,8 @@ private struct SidebarCounts {
 
 @MainActor
 struct DashboardView: View {
+    private static let appIcon = NSApp.applicationIconImage ?? NSImage()
+
     @Environment(AppState.self) private var appState
     @Environment(\.modelContext) private var modelContext
     @Query(filter: #Predicate<Plugin> { !$0.isRemoved }) private var plugins: [Plugin]
@@ -235,7 +237,7 @@ struct DashboardView: View {
             }
             .navigationTitle("Plugins")
             .safeAreaInset(edge: .bottom) {
-                Image(nsImage: NSApp.applicationIconImage)
+                Image(nsImage: Self.appIcon)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .opacity(0.5)

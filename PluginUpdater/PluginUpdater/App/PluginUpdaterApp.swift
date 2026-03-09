@@ -40,16 +40,10 @@ struct PluginUpdaterApp: App {
         .modelContainer(modelContainer)
         .commands {
             CommandGroup(after: .appInfo) {
-                Button("Scan Now") {
+                Button("Scan & Check for Updates") {
                     Task { await appState.performScan() }
                 }
                 .keyboardShortcut("r", modifiers: [.command])
-                .disabled(appState.isScanning)
-
-                Button("Check for Updates") {
-                    Task { await appState.checkForUpdates() }
-                }
-                .keyboardShortcut("u", modifiers: [.command, .shift])
                 .disabled(appState.isScanning)
 
                 Divider()

@@ -57,14 +57,7 @@ struct MenuBarPopoverView: View {
             Button {
                 Task { await appState.performScan() }
             } label: {
-                Label(appState.isScanning ? "Scanning…" : "Scan Now", systemImage: "arrow.clockwise")
-            }
-            .disabled(appState.isScanning)
-
-            Button {
-                Task { await appState.checkForUpdates() }
-            } label: {
-                Label("Check for Updates", systemImage: "arrow.triangle.2.circlepath")
+                Label(appState.isScanning ? "Scanning…" : "Scan & Check for Updates", systemImage: "arrow.clockwise")
             }
             .disabled(appState.isScanning)
 
