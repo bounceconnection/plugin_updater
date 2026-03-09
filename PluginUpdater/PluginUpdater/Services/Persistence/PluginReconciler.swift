@@ -109,6 +109,13 @@ actor PluginReconciler {
             )
         }
 
+        // Normalize vendor names across formats (e.g., AU "Plugin Alliance" vs VST3 "Plugin-alliance")
+        try normalizeVendorNames(vendorCache: &vendorsByName)
+
+        // Normalize vendor names globally across all plugins from the same vendor
+        // (e.g., VST3-only "bx_refinement" with "Plugin-alliance" when other PA plugins resolved to "Plugin Alliance")
+        try normalizeVendorNamesGlobally(vendorCache: &vendorsByName)
+
         // Single save for all changes
         try modelContext.save()
 
@@ -135,6 +142,9 @@ actor PluginReconciler {
         existing.lastSeenDate = .now
         existing.path = metadata.url.path
         existing.name = metadata.name
+        existing.architectures = metadata.architectures
+        existing.fileSize = metadata.fileSize
+        existing.fileCreationDate = metadata.fileCreationDate
 
         // Plugin reappeared after being removed
         if existing.isRemoved {
@@ -185,6 +195,10 @@ actor PluginReconciler {
             vendorName: metadata.vendorName
         )
 
+        plugin.architectures = metadata.architectures
+        plugin.fileSize = metadata.fileSize
+        plugin.fileCreationDate = metadata.fileCreationDate
+
         // Initial version record
         let initialVersion = PluginVersion(version: metadata.version)
         plugin.versionHistory.append(initialVersion)
@@ -224,5 +238,93 @@ actor PluginReconciler {
         modelContext.insert(vendor)
         cache[name] = vendor
         return vendor
+    }
+
+    /// When the same plugin exists in multiple formats (VST3, AU, CLAP), the vendor name
+    /// may differ because AU metadata (AudioComponents) is richer than VST3's fallback to
+    /// bundle ID domain extraction. This normalizes all formats to use the best vendor name.
+    private func normalizeVendorNames(vendorCache: inout [String: VendorInfo]) throws {
+        let descriptor = FetchDescriptor<Plugin>(predicate: #Predicate { !$0.isRemoved })
+        let allPlugins = try modelContext.fetch(descriptor)
+
+        // Group by bundleIdentifier
+        var byBundleID: [String: [Plugin]] = [:]
+        for plugin in allPlugins {
+            byBundleID[plugin.bundleIdentifier, default: []].append(plugin)
+        }
+
+        for (_, group) in byBundleID {
+            guard group.count > 1 else { continue }
+
+            let vendorNames = Set(group.map(\.vendorName))
+            guard vendorNames.count > 1 else { continue }
+
+            let bestName = pickBestVendorName(from: Array(vendorNames))
+            let vendor = findOrCreateVendor(name: bestName, cache: &vendorCache)
+            for plugin in group where plugin.vendorName != bestName {
+                plugin.vendorName = bestName
+                plugin.vendor = vendor
+            }
+        }
+    }
+
+    /// Scores vendor name candidates and picks the highest quality one.
+    /// Prefers: longer names, mixed case (proper branding), spaces over hyphens.
+    private func pickBestVendorName(from names: [String]) -> String {
+        names.max { a, b in
+            vendorNameScore(a) < vendorNameScore(b)
+        } ?? names[0]
+    }
+
+    private func vendorNameScore(_ name: String) -> Int {
+        var score = name.count
+        if name == "Unknown" { score -= 100 }
+        // Hyphens suggest bundle ID domain extraction (e.g., "Plugin-alliance")
+        if name.contains("-") { score -= 5 }
+        // Spaces suggest a proper display name (e.g., "Plugin Alliance")
+        if name.contains(" ") { score += 5 }
+        // Internal uppercase suggests proper branding (e.g., "LiquidSonics" vs "Liquidsonics")
+        if name.dropFirst().contains(where: { $0.isUppercase }) { score += 10 }
+        // Trailing year is noise from copyright extraction (e.g., "Rob Papen 2021")
+        if name.range(of: #"\s\d{4}$"#, options: .regularExpression) != nil { score -= 20 }
+        return score
+    }
+
+    /// Second normalization pass: groups all vendor names that are the same vendor
+    /// but spelled differently (e.g., "Plugin-alliance" vs "Plugin Alliance") by comparing
+    /// a canonical form (lowercased, hyphens→spaces). Picks the best spelling and applies
+    /// it to all plugins, even single-format ones.
+    private func normalizeVendorNamesGlobally(vendorCache: inout [String: VendorInfo]) throws {
+        let descriptor = FetchDescriptor<Plugin>(predicate: #Predicate { !$0.isRemoved })
+        let allPlugins = try modelContext.fetch(descriptor)
+
+        // Collect unique vendor names and group by canonical form
+        var namesByCanonical: [String: Set<String>] = [:]
+        for plugin in allPlugins {
+            let canonical = plugin.vendorName
+                .lowercased()
+                .replacingOccurrences(of: "-", with: " ")
+            namesByCanonical[canonical, default: []].insert(plugin.vendorName)
+        }
+
+        // For each group with multiple spellings, pick the best and normalize
+        for (_, variants) in namesByCanonical {
+            guard variants.count > 1 else { continue }
+
+            let bestName = pickBestVendorName(from: Array(variants))
+            let vendor = findOrCreateVendor(name: bestName, cache: &vendorCache)
+            for plugin in allPlugins where plugin.vendorName != bestName {
+                let canonical = plugin.vendorName
+                    .lowercased()
+                    .replacingOccurrences(of: "-", with: " ")
+                let bestCanonical = bestName
+                    .lowercased()
+                    .replacingOccurrences(of: "-", with: " ")
+                if canonical == bestCanonical {
+                    plugin.vendorName = bestName
+                    plugin.vendor = vendor
+                }
+            }
+        }
     }
 }

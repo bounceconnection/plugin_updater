@@ -87,6 +87,18 @@ struct PluginDetailView: View {
                             }
                         }
                     }
+                    LabeledContent("Architecture") {
+                        HStack(spacing: 4) {
+                            Text(plugin.architectureDisplayString)
+                            if plugin.isLegacyArchitecture {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(.yellow)
+                            }
+                        }
+                    }
+                    LabeledContent("Size") {
+                        Text(ByteCountFormatter.string(fromByteCount: plugin.fileSize, countStyle: .file))
+                    }
                     LabeledContent("Bundle ID") {
                         Text(plugin.bundleIdentifier)
                             .font(.caption.monospaced())

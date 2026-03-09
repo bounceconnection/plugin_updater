@@ -9,10 +9,16 @@ a macOS app that scans all your installed audio plugins (VST3, AU, CLAP), tracks
 - **Automatic Plugin Discovery** — Scans standard macOS audio plugin directories and reads bundle metadata (CFBundleIdentifier, version, vendor)
 - **Update Detection** — Find newer versions of your installed plugins upon each scan
 - **Format Support** — VST3, Audio Unit (AU), and CLAP plugin formats
-- **Sortable Columns** — Sort by name, vendor, format, installed version, or available version to quickly find plugins that need updating
+- **Multi-Select & Bulk Actions** — Cmd+click or Shift+click to select multiple plugins, then right-click for bulk operations
+- **Context Menu** — Copy Paths, Copy Full Details, Reveal in Finder, Open Publisher Website, and Hide/Unhide actions on any selection
+- **CPU Architecture Detection** — Reads Mach-O headers to show Apple Silicon, Intel 64, Universal, or legacy (Intel 32/PowerPC) status with warning badges for legacy plugins
+- **File Size & Date Added** — Shows bundle size and filesystem creation date for each plugin
+- **Sortable Columns** — Sort by name, vendor, format, installed version, available version, architecture, size, or date added
+- **Status Bar** — Shows total plugin count and current selection count at the bottom of the table
+- **Smart Vendor Resolution** — Automatically normalizes inconsistent vendor names across formats (e.g., "Plugin-alliance" → "Plugin Alliance") and strips trailing copyright years (e.g., "Rob Papen 2021" → "Rob Papen")
 - **Hide Plugins** — Right-click to hide plugins you don't care about; view and unhide them from the Hidden section in the sidebar
 - **Sidebar Filtering** — Filter by format (VST3, AU, CLAP) or show only plugins with updates available
-- **Detail Inspector** — View bundle ID, file path, version history, and download links for any plugin
+- **Detail Inspector** — View architecture, size, bundle ID, file path, version history, and download links for any plugin
 - **Real-time Monitoring** — Uses FSEvents to detect plugin changes in the background and trigger incremental scans
 - **Menu Bar Access** — Quick status view from the menu bar showing recent changes and update counts
 - **Notifications** — Get notified when plugins are added, removed, or updated
@@ -113,12 +119,19 @@ PluginUpdater/
     PluginUpdaterApp.swift    # App entry point, all views
     AppState.swift            # Observable state, scan orchestration
   Models/                     # SwiftData models (Plugin, PluginVersion, ScanLocation, etc.)
+                              # CPUArchitecture enum and display helpers
   Services/
-    Scanner/                  # Plugin discovery and metadata extraction
+    Scanner/                  # Plugin discovery, metadata extraction, Mach-O architecture detection
     Monitoring/               # FSEvents file system monitoring
-    Persistence/              # SwiftData reconciliation
+    Persistence/              # SwiftData reconciliation with vendor name normalization
     Notifications/            # macOS notification delivery
     Updates/                  # Homebrew API version checking, manifest management
+  Views/
+    Dashboard/                # Main table view with multi-select, context menu, status bar
+    Detail/                   # Plugin detail inspector with architecture and size
+    Settings/                 # Scan paths editor, preferences
+    MenuBar/                  # Menu bar popover
+    Components/               # Reusable UI components (format badge, vendor link, etc.)
   Utilities/                  # Constants, URL/String extensions
   Resources/                  # Cask mappings, default manifest, assets
 ```
@@ -128,6 +141,41 @@ PluginUpdater/
 - **Actor-based concurrency** — scanner, reconciler, and version checker use Swift actors for thread safety
 - **No third-party dependencies** — pure Swift/SwiftUI, ships as a single app bundle
 - **Plugin identity keyed on CFBundleIdentifier** — not file path, so moved plugins are tracked correctly
+
+## Development Workflow
+
+### Branching
+
+- **`main`** — stable releases only. Never push directly.
+- **`dev`** — integration branch. All feature/fix PRs target `dev`.
+- Feature branches: `git checkout dev && git checkout -b feature/<description>`
+
+### CI
+
+CI runs automatically on:
+- All PRs targeting `dev` or `main`
+- All pushes to `dev`
+
+### Releasing
+
+Releases are triggered via the **Promote to Main** workflow in GitHub Actions:
+
+1. Go to **Actions → Promote to Main → Run workflow**
+2. Choose a version (or leave blank for auto-bump):
+   - **Blank** — auto-increments the patch version (e.g. `1.2.3` → `1.2.4`)
+   - **`X.Y.Z`** — uses the exact version you specify (e.g. `2.0.0` for a major release)
+3. The workflow:
+   1. Creates a PR from `dev` → `main` (or reuses an existing one)
+   2. Merges the PR into `main`
+   3. Tags the merge commit as `vX.Y.Z`
+   4. The tag triggers the **Release** workflow, which builds the `.pkg` installer and creates a GitHub Release
+
+### Version Numbering
+
+Follow [Semantic Versioning](https://semver.org/):
+- **Patch** (`1.2.3` → `1.2.4`) — bug fixes, minor improvements (default)
+- **Minor** (`1.2.4` → `1.3.0`) — new features, backward-compatible
+- **Major** (`1.3.0` → `2.0.0`) — breaking changes
 
 ## License
 

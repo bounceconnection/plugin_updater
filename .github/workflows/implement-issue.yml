@@ -21,6 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: dev
           fetch-depth: 0
 
       - uses: anthropics/claude-code-action@v1
@@ -44,7 +45,7 @@ jobs:
             5. Make sure the project builds: run `cd PluginUpdater && swift build`
             6. Run ALL tests to verify nothing is broken: `cd PluginUpdater && swift test`
             7. If you added or removed source files, regenerate the Xcode project: `cd PluginUpdater && xcodegen generate`
-            8. Create a PR with a clear summary linking back to this issue using "Closes #<issue_number>"
+            8. Create a PR **targeting the `dev` branch** with a clear summary linking back to this issue using "Closes #<issue_number>". Use `gh pr create --base dev`.
 
             Key project details:
             - Swift/SwiftUI, SwiftData, macOS 14+, no third-party dependencies

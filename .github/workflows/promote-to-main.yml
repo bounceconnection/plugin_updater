@@ -1,0 +1,84 @@
+name: Promote to Main
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g. 1.2.0). Leave blank to auto-bump patch.'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create and merge PR from dev to main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Check if a dev→main PR already exists
+          EXISTING=$(gh pr list --base main --head dev --state open --json number --jq '.[0].number')
+
+          if [ -n "$EXISTING" ]; then
+            PR_NUMBER="$EXISTING"
+            echo "Using existing PR #$PR_NUMBER"
+          else
+            # Get the changelog between main and dev
+            CHANGES=$(gh api "repos/${{ github.repository }}/compare/main...dev" \
+              --jq '.commits | map("- " + .commit.message) | join("\n")' 2>/dev/null \
+              || echo "Unable to fetch changelog")
+
+            BODY="## Promote dev to main
+
+          Triggered manually via workflow dispatch.
+
+          ### Commits included
+          ${CHANGES}"
+
+            PR_URL=$(gh pr create \
+              --base main \
+              --head dev \
+              --title "Release: merge dev into main" \
+              --body "$BODY")
+            PR_NUMBER=$(echo "$PR_URL" | grep -o '[0-9]*$')
+            echo "Created PR #$PR_NUMBER"
+          fi
+
+          # Merge the PR
+          gh pr merge "$PR_NUMBER" --merge --admin
+          echo "Merged PR #$PR_NUMBER into main"
+
+      - name: Tag release
+        run: |
+          git fetch origin main
+          git checkout main
+
+          VERSION="${{ github.event.inputs.version }}"
+
+          if [ -z "$VERSION" ]; then
+            # Auto-bump: find latest tag and increment patch
+            LATEST_TAG=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -1)
+            if [ -z "$LATEST_TAG" ]; then
+              VERSION="1.0.0"
+            else
+              # Strip leading 'v' and split
+              CURRENT="${LATEST_TAG#v}"
+              MAJOR=$(echo "$CURRENT" | cut -d. -f1)
+              MINOR=$(echo "$CURRENT" | cut -d. -f2)
+              PATCH=$(echo "$CURRENT" | cut -d. -f3)
+              PATCH=$((PATCH + 1))
+              VERSION="${MAJOR}.${MINOR}.${PATCH}"
+            fi
+          fi
+
+          echo "Tagging v${VERSION}"
+          git tag "v${VERSION}"
+          git push origin "v${VERSION}"

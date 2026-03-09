@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import AppKit
 
 enum SidebarFilter: Hashable {
     case all
@@ -24,6 +25,18 @@ struct PluginRow: Identifiable {
     var updatePriority: Int { hasUpdate ? 2 : (availableVersion == "—" ? 0 : 1) }
     /// 1 = has download link, 0 = no link. For sorting.
     var hasDownload: Int { downloadURL != nil ? 1 : 0 }
+    var architectureDisplay: String { plugin.architectureDisplayString }
+    var fileSize: Int64 { plugin.fileSize }
+    var fileSizeDisplay: String { ByteCountFormatter.string(fromByteCount: plugin.fileSize, countStyle: .file) }
+    var dateAdded: Date {
+        // Some bundles have bogus filesystem creation dates (e.g. HFS+ epoch Dec 31, 1903).
+        // Treat anything before 2000 as invalid and fall back to First Seen date.
+        if let created = plugin.fileCreationDate,
+           created > Date(timeIntervalSince1970: 946_684_800) { // Jan 1, 2000
+            return created
+        }
+        return plugin.installedDate
+    }
 }
 
 /// All sidebar badge counts computed in a single pass over the plugins array.
@@ -46,7 +59,7 @@ struct DashboardView: View {
     @State private var debouncedSearchText = ""
     @State private var searchTask: Task<Void, Never>?
     @State private var sortOrder = [KeyPathComparator(\PluginRow.name)]
-    @State private var selectedPluginID: PersistentIdentifier?
+    @State private var selectedPluginIDs: Set<PersistentIdentifier> = []
     @State private var showInspector = false
 
     // MARK: - Computed helpers
@@ -110,6 +123,15 @@ struct DashboardView: View {
         return rows.sorted(using: sortOrder)
     }
 
+    private func statusBarText(rowCount: Int) -> String {
+        let pluginText = "Found \(rowCount) plugin\(rowCount == 1 ? "" : "s")"
+        let selectionCount = selectedPluginIDs.count
+        if selectionCount > 0 {
+            return "\(pluginText) (\(selectionCount) selected)"
+        }
+        return pluginText
+    }
+
     private var statusSubtitle: String {
         if let error = appState.errorMessage {
             return error
@@ -120,8 +142,58 @@ struct DashboardView: View {
     }
 
     private var selectedPlugin: Plugin? {
-        guard let id = selectedPluginID else { return nil }
+        guard let id = selectedPluginIDs.first else { return nil }
         return plugins.first { $0.id == id }
+    }
+
+    private func plugins(for ids: Set<PersistentIdentifier>) -> [Plugin] {
+        plugins.filter { ids.contains($0.id) }
+    }
+
+    private func copyPaths(for ids: Set<PersistentIdentifier>) {
+        let paths = plugins(for: ids).map(\.path).joined(separator: "\n")
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(paths, forType: .string)
+    }
+
+    private func copyFullDetails(for ids: Set<PersistentIdentifier>, manifest: [String: UpdateManifestEntry]) {
+        let details = plugins(for: ids).map { plugin -> String in
+            var lines = [
+                "Name: \(plugin.name)",
+                "Vendor: \(plugin.vendorName)",
+                "Format: \(plugin.format.rawValue)",
+                "Version: \(plugin.currentVersion)",
+                "Architecture: \(plugin.architectureDisplayString)",
+                "Size: \(ByteCountFormatter.string(fromByteCount: plugin.fileSize, countStyle: .file))",
+                "Path: \(plugin.path)",
+            ]
+            if let entry = manifest[plugin.bundleIdentifier] {
+                lines.append("Available: \(entry.latestVersion)")
+            }
+            return lines.joined(separator: "\n")
+        }.joined(separator: "\n\n")
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(details, forType: .string)
+    }
+
+    private func revealInFinder(ids: Set<PersistentIdentifier>) {
+        let urls = plugins(for: ids).map { URL(fileURLWithPath: $0.path) }
+        NSWorkspace.shared.activateFileViewerSelecting(urls)
+    }
+
+    private func openVendorWebsites(for ids: Set<PersistentIdentifier>, manifest: [String: UpdateManifestEntry]) {
+        var seen: Set<String> = []
+        var urls: [URL] = []
+        for plugin in plugins(for: ids) {
+            let urlString = manifest[plugin.bundleIdentifier]?.downloadURL ?? plugin.vendor?.websiteURL
+            guard let str = urlString, !str.isEmpty, !seen.contains(str), let url = URL(string: str) else { continue }
+            seen.insert(str)
+            urls.append(url)
+            if urls.count >= 10 { break }
+        }
+        for url in urls {
+            NSWorkspace.shared.open(url)
+        }
     }
 
     private func setHidden(_ hidden: Bool, for ids: Set<PersistentIdentifier>) {
@@ -170,7 +242,7 @@ struct DashboardView: View {
                     .padding(16)
             }
         } detail: {
-            Table(rows, selection: $selectedPluginID, sortOrder: $sortOrder) {
+            Table(rows, selection: $selectedPluginIDs, sortOrder: $sortOrder) {
                 TableColumn("Name", value: \PluginRow.name) { (row: PluginRow) in
                     Text(row.name)
                 }
@@ -203,18 +275,57 @@ struct DashboardView: View {
                     }
                 }
                 .width(min: 50, ideal: 70, max: 90)
+                TableColumn("Architecture", value: \PluginRow.architectureDisplay) { (row: PluginRow) in
+                    HStack(spacing: 4) {
+                        Text(row.architectureDisplay)
+                        if row.plugin.isLegacyArchitecture {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.yellow)
+                                .help("Legacy architecture — may not run natively")
+                        }
+                    }
+                }
+                .width(min: 80, ideal: 100, max: 140)
+                TableColumn("Size", value: \PluginRow.fileSize) { (row: PluginRow) in
+                    Text(row.fileSizeDisplay)
+                        .monospacedDigit()
+                }
+                .width(min: 50, ideal: 65, max: 90)
+                TableColumn("Date Added", value: \PluginRow.dateAdded) { (row: PluginRow) in
+                    Text(row.dateAdded.formatted(.dateTime.month(.abbreviated).day().year()))
+                }
+                .width(min: 80, ideal: 100, max: 130)
             }
             // Prevent SwiftUI from animating hundreds of row insertions/removals
             // when switching sidebar filters or clearing search text.
             .transaction { $0.disablesAnimations = true }
             .contextMenu(forSelectionType: PersistentIdentifier.self) { ids in
                 if !ids.isEmpty {
+                    let count = ids.count
+                    Button("Copy Path\(count > 1 ? "s" : "")") {
+                        copyPaths(for: ids)
+                    }
+                    Button("Copy Full Details") {
+                        copyFullDetails(for: ids, manifest: manifest)
+                    }
+
+                    Divider()
+
+                    Button("Reveal in Finder") {
+                        revealInFinder(ids: ids)
+                    }
+                    Button("Open Publisher Website") {
+                        openVendorWebsites(for: ids, manifest: manifest)
+                    }
+
+                    Divider()
+
                     if sidebarSelection == .hidden {
-                        Button("Unhide Plugin") {
+                        Button("Unhide\(count > 1 ? " \(count) Plugins" : " Plugin")") {
                             setHidden(false, for: ids)
                         }
                     } else {
-                        Button("Hide Plugin") {
+                        Button("Hide\(count > 1 ? " \(count) Plugins" : " Plugin")") {
                             setHidden(true, for: ids)
                         }
                     }
@@ -228,6 +339,17 @@ struct DashboardView: View {
                 } else if rows.isEmpty && sidebarSelection == .hidden {
                     ContentUnavailableView("No Hidden Plugins", systemImage: "eye.slash", description: Text("Right-click a plugin and choose Hide to hide it here."))
                 }
+            }
+            .safeAreaInset(edge: .bottom) {
+                HStack {
+                    Text(statusBarText(rowCount: rows.count))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(.bar)
             }
             .toolbar {
                 ToolbarItem(placement: .principal) {
@@ -286,8 +408,8 @@ struct DashboardView: View {
                     }
                 }
             }
-            .onChange(of: selectedPluginID) { _, newValue in
-                if newValue != nil {
+            .onChange(of: selectedPluginIDs) { _, newValue in
+                if !newValue.isEmpty {
                     showInspector = true
                 }
             }

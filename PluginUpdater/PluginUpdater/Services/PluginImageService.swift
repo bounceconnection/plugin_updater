@@ -4,7 +4,7 @@ import Foundation
 /// Fetches and caches plugin product images from bundle resources or web search.
 /// Strategies (tried in order):
 /// 1. VST3 Snapshots directory (standard VST3 spec)
-/// 2. Large image files in bundle Resources
+/// 2. Large, screenshot-like image files in bundle Resources (validates dimensions/ratio)
 /// 3. Open Graph image from vendor website
 /// 4. Bing Image Search
 actor PluginImageService {
@@ -13,11 +13,36 @@ actor PluginImageService {
     private let cacheDir: URL
     private var memoryCache: [String: NSImage] = [:]
     private var misses: Set<String> = []
+    private var vendorURLOverrides: [VendorURLEntry] = []
+
+    private struct VendorURLEntry: Codable {
+        let bundleIDPrefix: String
+        let url: String
+        enum CodingKeys: String, CodingKey {
+            case bundleIDPrefix = "bundle_id_prefix"
+            case url
+        }
+    }
 
     private init() {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         cacheDir = appSupport.appendingPathComponent("PluginUpdater/PluginImages")
         try? FileManager.default.createDirectory(at: cacheDir, withIntermediateDirectories: true)
+        vendorURLOverrides = Self.loadVendorURLs()
+    }
+
+    private static func loadVendorURLs() -> [VendorURLEntry] {
+        if let url = Bundle.main.url(forResource: "vendor_urls", withExtension: "json"),
+           let data = try? Data(contentsOf: url),
+           let decoded = try? JSONDecoder().decode([VendorURLEntry].self, from: data) {
+            return decoded
+        }
+        return []
+    }
+
+    /// Returns the vendor website URL for a given bundle ID from vendor_urls.json.
+    private func vendorWebsiteURL(for bundleID: String) -> String? {
+        vendorURLOverrides.first { bundleID.hasPrefix($0.bundleIDPrefix) }?.url
     }
 
     /// Returns a product image for the plugin, checking local bundle then web sources.
@@ -40,13 +65,21 @@ actor PluginImageService {
             return img
         }
 
-        // Strategy 1 & 2: Local bundle images
+        // Strategy 1 & 2: Local bundle images (with validation for Resources)
         if let img = findLocalImage(pluginPath: pluginPath) {
             return save(img, key: key, file: cacheFile)
         }
 
-        // Strategy 3: Bing image search (prefers vendor domain product page images)
-        if let img = await webImageSearch(name: pluginName, vendor: vendorName, vendorURL: vendorURL) {
+        // Strategy 3: OG image from vendor website
+        let resolvedVendorURL = vendorURL ?? vendorWebsiteURL(for: bundleID)
+        if let siteURL = resolvedVendorURL {
+            if let img = await fetchOGImage(from: siteURL) {
+                return save(img, key: key, file: cacheFile)
+            }
+        }
+
+        // Strategy 4: Bing image search (prefers vendor domain product page images)
+        if let img = await webImageSearch(name: pluginName, vendor: vendorName, vendorURL: resolvedVendorURL) {
             return save(img, key: key, file: cacheFile)
         }
 
@@ -66,39 +99,134 @@ actor PluginImageService {
             return img
         }
 
-        // Resources directory — look for large images (likely artwork, not tiny icons)
+        // Resources directory — look for large images that look like product screenshots.
+        // Many plugins store UI textures (knob spritesheets, skin tiles) here, so we
+        // validate dimensions and aspect ratio to reject those.
         let resourcesDir = bundleURL.appendingPathComponent("Contents/Resources")
-        if let img = largestImage(in: resourcesDir, fm: fm, minSize: 10_000) {
+        if let img = largestImage(in: resourcesDir, fm: fm, minSize: 10_000, validateScreenshot: true) {
             return img
         }
 
         return nil
     }
 
-    private nonisolated func largestImage(in directory: URL, fm: FileManager, minSize: Int = 0) -> NSImage? {
+    /// Common filename patterns for internal UI assets (not product screenshots).
+    private static let uiAssetPatterns = [
+        "knob", "slider", "button", "background", "bg_", "skin", "dial", "fader",
+        "meter", "led_", "icon", "sprite", "overlay", "texture", "cursor", "font",
+        "beetle", "egg", "bubble",
+    ]
+
+    private nonisolated func largestImage(
+        in directory: URL,
+        fm: FileManager,
+        minSize: Int = 0,
+        validateScreenshot: Bool = false
+    ) -> NSImage? {
         guard let files = try? fm.contentsOfDirectory(at: directory, includingPropertiesForKeys: [.fileSizeKey]) else {
             return nil
         }
 
         let imageExtensions: Set<String> = ["png", "jpg", "jpeg", "tiff", "bmp"]
-        let best = files
-            .filter { imageExtensions.contains($0.pathExtension.lowercased()) }
+
+        let candidates = files
+            .filter { url in
+                let ext = url.pathExtension.lowercased()
+                guard imageExtensions.contains(ext) else { return false }
+
+                if validateScreenshot {
+                    let name = url.deletingPathExtension().lastPathComponent.lowercased()
+                    if Self.uiAssetPatterns.contains(where: { name.contains($0) }) { return false }
+                }
+                return true
+            }
             .compactMap { url -> (URL, Int)? in
                 guard let size = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize,
                       size >= minSize else { return nil }
                 return (url, size)
             }
-            .max(by: { $0.1 < $1.1 })
+            .sorted { $0.1 > $1.1 }
 
-        if let best {
-            return NSImage(contentsOf: best.0)
+        for (url, _) in candidates {
+            guard let img = NSImage(contentsOf: url) else { continue }
+
+            if validateScreenshot {
+                // Must be reasonably sized and proportioned to be a product screenshot
+                guard img.size.width >= 200,
+                      img.size.height >= 200,
+                      isReasonableAspectRatio(img) else { continue }
+            }
+
+            return img
         }
+
         return nil
     }
 
     // MARK: - Strategy 3: OG Image from Vendor Website
 
-    // MARK: - Strategy 3: Web Image Search (Bing async endpoint)
+    private func fetchOGImage(from websiteURL: String) async -> NSImage? {
+        guard let url = URL(string: websiteURL) else { return nil }
+
+        var request = URLRequest(url: url, timeoutInterval: 8)
+        request.setValue(
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
+            forHTTPHeaderField: "User-Agent"
+        )
+
+        guard let (data, response) = try? await URLSession.shared.data(for: request),
+              let http = response as? HTTPURLResponse,
+              http.statusCode == 200,
+              let html = String(data: data, encoding: .utf8) else {
+            return nil
+        }
+
+        // Extract og:image or twitter:image content
+        guard let imageURLString = extractOGImageURL(from: html),
+              let imageURL = URL(string: imageURLString, relativeTo: url)?.absoluteURL else {
+            return nil
+        }
+
+        var imgRequest = URLRequest(url: imageURL, timeoutInterval: 8)
+        imgRequest.setValue(
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15",
+            forHTTPHeaderField: "User-Agent"
+        )
+
+        guard let (imgData, imgResp) = try? await URLSession.shared.data(for: imgRequest),
+              let imgHTTP = imgResp as? HTTPURLResponse,
+              imgHTTP.statusCode == 200,
+              let img = NSImage(data: imgData),
+              img.size.width >= 100, img.size.height >= 100,
+              isReasonableAspectRatio(img) else {
+            return nil
+        }
+
+        return img
+    }
+
+    /// Extracts the og:image or twitter:image URL from HTML.
+    private nonisolated func extractOGImageURL(from html: String) -> String? {
+        // Try og:image first, then twitter:image
+        let patterns = [
+            #"<meta[^>]*property\s*=\s*"og:image"[^>]*content\s*=\s*"([^"]+)""#,
+            #"<meta[^>]*content\s*=\s*"([^"]+)"[^>]*property\s*=\s*"og:image""#,
+            #"<meta[^>]*name\s*=\s*"twitter:image"[^>]*content\s*=\s*"([^"]+)""#,
+            #"<meta[^>]*content\s*=\s*"([^"]+)"[^>]*name\s*=\s*"twitter:image""#,
+        ]
+
+        for pattern in patterns {
+            guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
+                  let match = regex.firstMatch(in: html, range: NSRange(html.startIndex..., in: html)),
+                  let range = Range(match.range(at: 1), in: html) else { continue }
+            let urlString = String(html[range])
+            if !urlString.isEmpty { return urlString }
+        }
+
+        return nil
+    }
+
+    // MARK: - Strategy 4: Web Image Search (Bing async endpoint)
 
     private struct ImageCandidate {
         let imageURL: URL

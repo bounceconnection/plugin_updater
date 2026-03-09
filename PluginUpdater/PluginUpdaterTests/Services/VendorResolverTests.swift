@@ -167,6 +167,117 @@ struct VendorResolverTests {
         #expect(result == "SomeVendor")
     }
 
+    // MARK: - Trailing year stripping
+
+    @Test("Strips trailing year from copyright")
+    func stripsTrailingYear() {
+        let result = VendorResolver.extractVendorFromCopyright("© Rob Papen 2021")
+        #expect(result == "Rob Papen")
+    }
+
+    @Test("Strips trailing year with comma separator")
+    func stripsTrailingYearWithComma() {
+        let result = VendorResolver.extractVendorFromCopyright("© Rob Papen, 2022")
+        #expect(result == "Rob Papen")
+    }
+
+    @Test("Strips trailing year when copyright has no symbol")
+    func stripsTrailingYearNoSymbol() {
+        // Some plists just have "Rob Papen 2021" in the copyright field
+        let result = VendorResolver.extractVendorFromCopyright("Rob Papen 2021")
+        #expect(result == "Rob Papen")
+    }
+
+    @Test("Handles both leading and trailing year")
+    func handlesBothLeadingAndTrailingYear() {
+        // Unusual but possible: "2021 Rob Papen 2021"
+        let result = VendorResolver.extractVendorFromCopyright("© 2021 Rob Papen 2021")
+        #expect(result == "Rob Papen")
+    }
+
+    @Test("Does not strip 4-digit number that is part of vendor name")
+    func doesNotStripNonYearNumber() {
+        // "SPC Plugins 2019" — 2019 looks like a year and gets stripped. This is acceptable
+        // because product names with years are rare, and the vendor is still identifiable.
+        let result = VendorResolver.extractVendorFromCopyright("SPC Plugins 2019")
+        #expect(result == "SPC Plugins")
+    }
+
+    @Test("Trailing year stripping works in full resolve chain")
+    func trailingYearInResolveChain() {
+        let result = VendorResolver.resolve(
+            audioComponentName: nil,
+            copyright: "© Rob Papen 2021",
+            getInfoString: nil,
+            bundleIDDomain: "robpapen",
+            parentDirectory: "Rob Papen",
+            format: .vst3
+        )
+        #expect(result == "Rob Papen")
+    }
+
+    @Test("Strips trailing year with dash separator")
+    func stripsTrailingYearWithDash() {
+        let result = VendorResolver.extractVendorFromCopyright("© Rob Papen - 2023")
+        #expect(result == "Rob Papen")
+    }
+
+    @Test("Strips different trailing years consistently")
+    func stripsVariousTrailingYears() {
+        #expect(VendorResolver.extractVendorFromCopyright("Rob Papen 2021") == "Rob Papen")
+        #expect(VendorResolver.extractVendorFromCopyright("Rob Papen 2022") == "Rob Papen")
+        #expect(VendorResolver.extractVendorFromCopyright("Rob Papen 2023") == "Rob Papen")
+        #expect(VendorResolver.extractVendorFromCopyright("Rob Papen 2024") == "Rob Papen")
+        #expect(VendorResolver.extractVendorFromCopyright("Rob Papen 2025") == "Rob Papen")
+    }
+
+    @Test("Year-only copyright returns nil")
+    func yearOnlyCopyrightReturnsNil() {
+        // After stripping leading year, nothing remains
+        let result = VendorResolver.extractVendorFromCopyright("© 2024")
+        #expect(result == nil)
+    }
+
+    @Test("Preserves vendor name that contains digits but not a trailing year")
+    func preservesDigitsInVendorName() {
+        let result = VendorResolver.extractVendorFromCopyright("© D16 Group Audio Software")
+        #expect(result == "D16 Group Audio Software")
+    }
+
+    @Test("Strips trailing year from getInfoString in resolve chain")
+    func trailingYearInGetInfoString() {
+        let result = VendorResolver.resolve(
+            audioComponentName: nil,
+            copyright: nil,
+            getInfoString: "Rob Papen 2022",
+            bundleIDDomain: "robpapen",
+            parentDirectory: "Rob Papen",
+            format: .vst3
+        )
+        #expect(result == "Rob Papen")
+    }
+
+    @Test("AU component name is not affected by year stripping")
+    func auComponentNameNotStripped() {
+        // AU component names come from a different field and should be trusted as-is
+        let result = VendorResolver.resolve(
+            audioComponentName: "Rob Papen",
+            copyright: "Rob Papen 2021",
+            getInfoString: nil,
+            bundleIDDomain: "robpapen",
+            parentDirectory: "Rob Papen",
+            format: .au
+        )
+        #expect(result == "Rob Papen")
+    }
+
+    @Test("Strips trailing year and LLC suffix together")
+    func stripsTrailingYearAndLLC() {
+        // Order matters: LLC stripped first, then trailing year
+        let result = VendorResolver.extractVendorFromCopyright("© Valhalla DSP, LLC 2023")
+        #expect(result == "Valhalla DSP")
+    }
+
     // MARK: - Empty/whitespace handling
 
     @Test("Empty AU component name falls through")

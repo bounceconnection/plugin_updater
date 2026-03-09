@@ -17,6 +17,10 @@ struct PluginMetadata: Sendable {
 
     /// All string-valued plist fields (for URL extraction by VendorURLResolver)
     let plistFields: [String: String]
+
+    let architectures: [CPUArchitecture]
+    let fileSize: Int64
+    let fileCreationDate: Date?
 }
 
 enum BundleMetadataExtractor {
@@ -64,6 +68,16 @@ enum BundleMetadataExtractor {
             }
         }
 
+        // Architecture detection from Mach-O binary
+        let executableName = plist["CFBundleExecutable"] as? String
+        let architectures = ArchitectureDetector.detect(bundleURL: bundleURL, executableName: executableName)
+
+        // Bundle size: sum all files in the bundle
+        let fileSize = Self.calculateBundleSize(bundleURL)
+
+        // File creation date
+        let fileCreationDate = Self.getCreationDate(bundleURL)
+
         return PluginMetadata(
             url: bundleURL,
             format: format,
@@ -76,7 +90,10 @@ enum BundleMetadataExtractor {
             getInfoString: getInfoString,
             bundleIDDomain: bundleIDDomain,
             parentDirectory: parentDir,
-            plistFields: fields
+            plistFields: fields,
+            architectures: architectures,
+            fileSize: fileSize,
+            fileCreationDate: fileCreationDate
         )
     }
 
@@ -133,5 +150,29 @@ enum BundleMetadataExtractor {
         let parts = bundleID.split(separator: ".")
         guard parts.count >= 2 else { return nil }
         return String(parts[1])
+    }
+
+    /// Calculates the total size of all files in a bundle directory.
+    private static func calculateBundleSize(_ bundleURL: URL) -> Int64 {
+        let fm = FileManager.default
+        guard let enumerator = fm.enumerator(
+            at: bundleURL,
+            includingPropertiesForKeys: [.fileSizeKey],
+            options: [.skipsHiddenFiles]
+        ) else { return 0 }
+
+        var total: Int64 = 0
+        for case let fileURL as URL in enumerator {
+            if let values = try? fileURL.resourceValues(forKeys: [.fileSizeKey]),
+               let size = values.fileSize {
+                total += Int64(size)
+            }
+        }
+        return total
+    }
+
+    /// Gets the filesystem creation date of a bundle.
+    private static func getCreationDate(_ bundleURL: URL) -> Date? {
+        try? bundleURL.resourceValues(forKeys: [.creationDateKey]).creationDate
     }
 }
