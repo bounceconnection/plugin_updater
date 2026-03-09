@@ -104,11 +104,6 @@ Plugin Updater uses a mapping of plugin bundle ID prefixes to [Homebrew Cask](ht
 3. Queries `https://formulae.brew.sh/api/cask/<name>.json` for the latest version
 4. Compares installed vs. latest and highlights available updates
 
-Currently supported vendors for automatic update checking:
-- FabFilter (14 products)
-- Valhalla DSP (3 products)
-- Soundtoys
-
 The cask mappings file (`Resources/cask_mappings.json`) can be extended to support additional vendors.
 
 ## Architecture
