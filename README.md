@@ -142,6 +142,41 @@ PluginUpdater/
 - **No third-party dependencies** — pure Swift/SwiftUI, ships as a single app bundle
 - **Plugin identity keyed on CFBundleIdentifier** — not file path, so moved plugins are tracked correctly
 
+## Development Workflow
+
+### Branching
+
+- **`main`** — stable releases only. Never push directly.
+- **`dev`** — integration branch. All feature/fix PRs target `dev`.
+- Feature branches: `git checkout dev && git checkout -b feature/<description>`
+
+### CI
+
+CI runs automatically on:
+- All PRs targeting `dev` or `main`
+- All pushes to `dev`
+
+### Releasing
+
+Releases are triggered via the **Promote to Main** workflow in GitHub Actions:
+
+1. Go to **Actions → Promote to Main → Run workflow**
+2. Choose a version (or leave blank for auto-bump):
+   - **Blank** — auto-increments the patch version (e.g. `1.2.3` → `1.2.4`)
+   - **`X.Y.Z`** — uses the exact version you specify (e.g. `2.0.0` for a major release)
+3. The workflow:
+   1. Creates a PR from `dev` → `main` (or reuses an existing one)
+   2. Merges the PR into `main`
+   3. Tags the merge commit as `vX.Y.Z`
+   4. The tag triggers the **Release** workflow, which builds the `.pkg` installer and creates a GitHub Release
+
+### Version Numbering
+
+Follow [Semantic Versioning](https://semver.org/):
+- **Patch** (`1.2.3` → `1.2.4`) — bug fixes, minor improvements (default)
+- **Minor** (`1.2.4` → `1.3.0`) — new features, backward-compatible
+- **Major** (`1.3.0` → `2.0.0`) — breaking changes
+
 ## License
 
 MIT
