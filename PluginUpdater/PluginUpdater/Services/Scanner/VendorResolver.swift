@@ -84,6 +84,10 @@ enum VendorResolver {
         s = s.trimmingCharacters(in: .whitespacesAndNewlines.union(.init(charactersIn: ".,;-")))
 
         guard !s.isEmpty else { return nil }
+
+        // Reject version-number-like strings (e.g., "2.0.3", "1.0")
+        if s.allSatisfy({ $0.isNumber || $0 == "." || $0 == "-" }) { return nil }
+
         return s
     }
 

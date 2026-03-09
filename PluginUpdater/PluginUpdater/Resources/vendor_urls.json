@@ -66,5 +66,7 @@
   {"bundle_id_prefix": "com.lusid", "url": "https://lusidmusic.com/"},
   {"bundle_id_prefix": "com.temeculadsp", "url": "https://temeculadsp.com/"},
   {"bundle_id_prefix": "com.SPC", "url": "https://www.spcplugins.com/"},
-  {"bundle_id_prefix": "com.theusualsuspects", "url": "https://dsp56300.wordpress.com/category/downloads/"}
+  {"bundle_id_prefix": "com.theusualsuspects", "url": "https://dsp56300.wordpress.com/category/downloads/"},
+  {"bundle_id_prefix": "com.gforce", "url": "https://www.gforcesoft.com/"},
+  {"bundle_id_prefix": "com.GForce", "url": "https://www.gforcesoft.com/"}
 ]

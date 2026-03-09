@@ -305,4 +305,31 @@ struct VendorResolverTests {
         )
         #expect(result == "TestVendor")
     }
+
+    // MARK: - Version-like string rejection
+
+    @Test("Version string in getInfoString falls through to bundle ID")
+    func versionStringGetInfoFallsThrough() {
+        let result = VendorResolver.resolve(
+            audioComponentName: nil,
+            copyright: nil,
+            getInfoString: "2.0.3",
+            bundleIDDomain: "gforce",
+            parentDirectory: "Components",
+            format: .au
+        )
+        #expect(result == "Gforce")
+    }
+
+    @Test("Version string in copyright returns nil")
+    func versionStringCopyrightReturnsNil() {
+        let result = VendorResolver.extractVendorFromCopyright("2.0.3")
+        #expect(result == nil)
+    }
+
+    @Test("Dotted version number returns nil")
+    func dottedVersionReturnsNil() {
+        #expect(VendorResolver.extractVendorFromCopyright("1.0") == nil)
+        #expect(VendorResolver.extractVendorFromCopyright("10.2.1") == nil)
+    }
 }
