@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Install xcodegen
         run: brew install xcodegen
@@ -34,19 +36,81 @@ jobs:
           echo "PATH=$PKG_PATH" >> "$GITHUB_OUTPUT"
           echo "NAME=$(basename "$PKG_PATH")" >> "$GITHUB_OUTPUT"
 
+      - name: Build changelog
+        id: changelog
+        run: |
+          # Find the previous version tag
+          PREV_TAG=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname \
+            | grep -v "^${GITHUB_REF_NAME}$" | head -1)
+
+          if [ -z "$PREV_TAG" ]; then
+            RANGE="$GITHUB_REF_NAME"
+          else
+            RANGE="${PREV_TAG}..${GITHUB_REF_NAME}"
+          fi
+
+          # Collect commit subjects, skip merge commits
+          COMMITS=$(git log "$RANGE" --pretty=format:'%s' --no-merges)
+
+          # Categorize commits
+          FEATURES=""
+          FIXES=""
+          OTHER=""
+
+          while IFS= read -r msg; do
+            [ -z "$msg" ] && continue
+            lowercase=$(echo "$msg" | tr '[:upper:]' '[:lower:]')
+            case "$lowercase" in
+              add*|feat*|implement*|introduce*|new\ *)
+                FEATURES="${FEATURES}- ${msg}\n" ;;
+              fix*|bug*|patch*|correct*|resolve*)
+                FIXES="${FIXES}- ${msg}\n" ;;
+              *)
+                OTHER="${OTHER}- ${msg}\n" ;;
+            esac
+          done <<< "$COMMITS"
+
+          # Build the changelog body
+          BODY=""
+          if [ -n "$FEATURES" ]; then
+            BODY="${BODY}### New Features\n${FEATURES}\n"
+          fi
+          if [ -n "$FIXES" ]; then
+            BODY="${BODY}### Bug Fixes\n${FIXES}\n"
+          fi
+          if [ -n "$OTHER" ]; then
+            BODY="${BODY}### Other Changes\n${OTHER}\n"
+          fi
+
+          if [ -z "$BODY" ]; then
+            BODY="No changes since previous release.\n"
+          fi
+
+          # Write full release body to file
+          printf "%b" "$BODY" > /tmp/release-body.md
+
+          if [ -n "$PREV_TAG" ]; then
+            echo "**Full diff:** [\`${PREV_TAG}...${GITHUB_REF_NAME}\`](https://github.com/${{ github.repository }}/compare/${PREV_TAG}...${GITHUB_REF_NAME})" >> /tmp/release-body.md
+          fi
+
+          # Append installation instructions
+          {
+            echo ""
+            echo "---"
+            echo ""
+            echo "### Installation"
+            echo "1. Download the \`.pkg\` file below."
+            echo "2. Double-click the \`.pkg\` file."
+            echo "3. Follow the installer prompts — the app is installed to \`/Applications\`."
+            echo ""
+            echo "> **Note:** Because this build is unsigned, macOS may show a Gatekeeper warning."
+            echo "> To open anyway: right-click the \`.pkg\` → **Open** → **Open**."
+          } >> /tmp/release-body.md
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           name: "Plugin Updater ${{ steps.version.outputs.VERSION }}"
-          body: |
-            ## Plugin Updater ${{ steps.version.outputs.VERSION }}
-
-            ### Installation
-            1. Download **${{ steps.pkg.outputs.NAME }}** below.
-            2. Double-click the `.pkg` file.
-            3. Follow the installer prompts — the app is installed to `/Applications`.
-
-            > **Note:** Because this build is unsigned, macOS may show a Gatekeeper warning.
-            > To open anyway: right-click the `.pkg` → **Open** → **Open**.
+          body_path: /tmp/release-body.md
           files: ${{ steps.pkg.outputs.PATH }}
           fail_on_unmatched_files: true
