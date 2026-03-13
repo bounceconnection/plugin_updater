@@ -47,6 +47,7 @@ if ! command -v xcodegen &>/dev/null; then
 fi
 
 echo "[1/4] Generating Xcode project..."
+"$REPO_ROOT/scripts/generate-version.sh"
 xcodegen generate --quiet
 
 # ── 2. Archive ───────────────────────────────────────────────────────────────
