@@ -302,9 +302,10 @@ struct DashboardView: View {
                 .width(min: 80, ideal: 100, max: 130)
             }
             .background(NSTableViewFinder.enableColumnAutoResize())
-            // Prevent SwiftUI from animating hundreds of row insertions/removals
-            // when switching sidebar filters or clearing search text.
-            .transaction { $0.disablesAnimations = true }
+            // Force SwiftUI to recreate the Table entirely when the filter
+            // changes, instead of diffing hundreds of row insertions/removals
+            // which causes a multi-second hang on the main thread.
+            .id(sidebarSelection)
             .contextMenu(forSelectionType: PersistentIdentifier.self) { ids in
                 if !ids.isEmpty {
                     let count = ids.count
