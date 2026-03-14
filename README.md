@@ -1,6 +1,6 @@
 # Plugin Updater
 
-a macOS app that scans all your installed audio plugins (VST3, AU, CLAP), tracks their versions, and automatically checks for available updates.
+a macOS app that scans all your installed audio plugins (AU, CLAP, VST2, VST3), tracks their versions, and automatically checks for available updates.
 
 ![Dashboard](screenshots/dashboard.png)
 
@@ -8,7 +8,7 @@ a macOS app that scans all your installed audio plugins (VST3, AU, CLAP), tracks
 
 - **Automatic Plugin Discovery** — Scans standard macOS audio plugin directories and reads bundle metadata (CFBundleIdentifier, version, vendor)
 - **Update Detection** — Find newer versions of your installed plugins upon each scan
-- **Format Support** — VST3, Audio Unit (AU), and CLAP plugin formats
+- **Format Support** — AU, CLAP, VST2, and VST3 plugin formats
 - **Multi-Select & Bulk Actions** — Cmd+click or Shift+click to select multiple plugins, then right-click for bulk operations
 - **Context Menu** — Copy Paths, Copy Full Details, Reveal in Finder, Open Publisher Website, and Hide/Unhide actions on any selection
 - **CPU Architecture Detection** — Reads Mach-O headers to show Apple Silicon, Intel 64, Universal, or legacy (Intel 32/PowerPC) status with warning badges for legacy plugins
@@ -17,13 +17,11 @@ a macOS app that scans all your installed audio plugins (VST3, AU, CLAP), tracks
 - **Status Bar** — Shows total plugin count and current selection count at the bottom of the table
 - **Smart Vendor Resolution** — Automatically normalizes inconsistent vendor names across formats (e.g., "Plugin-alliance" → "Plugin Alliance") and strips trailing copyright years (e.g., "Rob Papen 2021" → "Rob Papen")
 - **Hide Plugins** — Right-click to hide plugins you don't care about; view and unhide them from the Hidden section in the sidebar
-- **Sidebar Filtering** — Filter by format (VST3, AU, CLAP) or show only plugins with updates available
+- **Sidebar Filtering** — Filter by format (AU, CLAP, VST2, VST3) or show only plugins with updates available
 - **Detail Inspector** — View architecture, size, bundle ID, file path, version history, and download links for any plugin
 - **Real-time Monitoring** — Uses FSEvents to detect plugin changes in the background and trigger incremental scans
 - **Menu Bar Access** — Quick status view from the menu bar showing recent changes and update counts
 - **Notifications** — Get notified when plugins are added, removed, or updated
-
-![Updates Available](screenshots/updates.png)
 
 ## Requirements
 
@@ -82,8 +80,9 @@ swift build
 
 1. **Launch the app** — On first run, it automatically scans the default plugin directories:
    - `/Library/Audio/Plug-Ins/Components/` (Audio Units)
-   - `/Library/Audio/Plug-Ins/VST3/` (VST3)
    - `/Library/Audio/Plug-Ins/CLAP/` (CLAP)
+   - `/Library/Audio/Plug-Ins/VST/` (VST2)
+   - `/Library/Audio/Plug-Ins/VST3/` (VST3)
 
 2. **Scan for plugins** — Click the **Scan Now** button in the toolbar to rescan all directories.
 
