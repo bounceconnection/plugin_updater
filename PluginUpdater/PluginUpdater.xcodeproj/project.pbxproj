@@ -40,6 +40,7 @@
 		A709FEEA68B7E388F1A5AAFD /* VendorLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68BBAABB4C7CF313F0C5E8E0 /* VendorLink.swift */; };
 		A83F2BF484741B576EBFD528 /* ArchitectureDetectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB60DE5B1E64F45E37BD8A1C /* ArchitectureDetectorTests.swift */; };
 		AE39E1893F3995A0372E46C8 /* UpdateStatusIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B2A40B95918D92D1FAEB0BC /* UpdateStatusIndicator.swift */; };
+		B26B9937EF5FB24735575B8C /* NotificationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77DEF28C969390E7D1827F3D /* NotificationSettingsView.swift */; };
 		B49D299B461F137CCE71320E /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27AD453D9B6930C4A3717BED /* NotificationManager.swift */; };
 		B6220976895AFAD7563D0C4F /* URLExtensionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CE6380DB266015098CA2F47 /* URLExtensionTests.swift */; };
 		BB685A85A17B33B5B7F744F2 /* String+Version.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F8EF8565B79D25D4658BE /* String+Version.swift */; };
@@ -110,6 +111,7 @@
 		68BBAABB4C7CF313F0C5E8E0 /* VendorLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VendorLink.swift; sourceTree = "<group>"; };
 		696F41E6C13E22B96BB66267 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		6BC8E0BFE748332634B82821 /* Plugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Plugin.swift; sourceTree = "<group>"; };
+		77DEF28C969390E7D1827F3D /* NotificationSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationSettingsView.swift; sourceTree = "<group>"; };
 		7A598E6367944C87FE41AEE0 /* PluginReconcilerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginReconcilerTests.swift; sourceTree = "<group>"; };
 		7E455535FE74D6F17BDEBF9E /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		7FE3723F80F115C503F6117F /* MenuBarPopoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarPopoverView.swift; sourceTree = "<group>"; };
@@ -207,6 +209,7 @@
 		48217EE8A0F52F6229BA7415 /* Settings */ = {
 			isa = PBXGroup;
 			children = (
+				77DEF28C969390E7D1827F3D /* NotificationSettingsView.swift */,
 				0DC3971E9045D641781CF69E /* ScanPathsEditor.swift */,
 				7E455535FE74D6F17BDEBF9E /* SettingsView.swift */,
 			);
@@ -541,6 +544,7 @@
 				CD34817EAA390B6528E62B5D /* MenuBarPopoverView.swift in Sources */,
 				7E95577656352305F6537C11 /* NSTableViewFinder.swift in Sources */,
 				B49D299B461F137CCE71320E /* NotificationManager.swift in Sources */,
+				B26B9937EF5FB24735575B8C /* NotificationSettingsView.swift in Sources */,
 				300120473D5D58C1510785F3 /* PersistenceController.swift in Sources */,
 				846D8655E139B8D9B814B8DE /* Plugin.swift in Sources */,
 				A0789214418FC09BCFFA1A08 /* PluginDetailView.swift in Sources */,

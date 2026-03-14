@@ -27,7 +27,7 @@ final class NotificationManager: @unchecked Sendable {
         let updated = changes.filter { if case .updated = $0.changeType { return true }; return false }
         let removed = changes.filter { if case .removed = $0.changeType { return true }; return false }
 
-        if !added.isEmpty {
+        if !added.isEmpty && UserDefaults.standard.bool(forKey: Constants.UserDefaultsKeys.notifyNewPlugins) {
             send(
                 title: "\(added.count) New Plugin\(added.count == 1 ? "" : "s")",
                 body: summaryText(for: added),
@@ -35,7 +35,7 @@ final class NotificationManager: @unchecked Sendable {
             )
         }
 
-        if !updated.isEmpty {
+        if !updated.isEmpty && UserDefaults.standard.bool(forKey: Constants.UserDefaultsKeys.notifyUpdatedPlugins) {
             send(
                 title: "\(updated.count) Plugin\(updated.count == 1 ? "" : "s") Updated",
                 body: summaryText(for: updated),
@@ -43,7 +43,7 @@ final class NotificationManager: @unchecked Sendable {
             )
         }
 
-        if !removed.isEmpty {
+        if !removed.isEmpty && UserDefaults.standard.bool(forKey: Constants.UserDefaultsKeys.notifyRemovedPlugins) {
             send(
                 title: "\(removed.count) Plugin\(removed.count == 1 ? "" : "s") Removed",
                 body: summaryText(for: removed),

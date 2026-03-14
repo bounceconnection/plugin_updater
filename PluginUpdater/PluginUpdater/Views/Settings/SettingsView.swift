@@ -4,7 +4,6 @@ import ServiceManagement
 
 struct SettingsView: View {
     @Environment(AppState.self) private var appState
-    @AppStorage(Constants.UserDefaultsKeys.notificationsEnabled) private var notificationsEnabled = true
     @AppStorage(Constants.UserDefaultsKeys.manifestURL) private var manifestURL = ""
     @AppStorage(Constants.UserDefaultsKeys.scanFrequency) private var scanFrequencyMinutes = Constants.Defaults.scanFrequencyMinutes
     @State private var launchAtLogin = false
@@ -25,6 +24,10 @@ struct SettingsView: View {
             ScanPathsEditor()
                 .tabItem { Label("Scan Paths", systemImage: "folder.badge.gearshape") }
 
+            // Notifications
+            NotificationSettingsView()
+                .tabItem { Label("Notifications", systemImage: "bell.badge") }
+
             // General
             Form {
                 Section("Scanning") {
@@ -36,10 +39,6 @@ struct SettingsView: View {
                     .onChange(of: scanFrequencyMinutes) { _, newValue in
                         appState.updateAutoScanInterval(minutes: newValue)
                     }
-                }
-
-                Section("Notifications") {
-                    Toggle("Enable notifications for plugin changes", isOn: $notificationsEnabled)
                 }
 
                 Section("Update Manifest") {

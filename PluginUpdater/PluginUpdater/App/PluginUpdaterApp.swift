@@ -85,6 +85,12 @@ struct PluginUpdaterApp: App {
 
     @MainActor
     private func initialSetup() async {
+        UserDefaults.standard.register(defaults: [
+            Constants.UserDefaultsKeys.notifyNewPlugins: true,
+            Constants.UserDefaultsKeys.notifyUpdatedPlugins: true,
+            Constants.UserDefaultsKeys.notifyRemovedPlugins: true,
+        ])
+
         AppLogger.shared.info(
             "App started — version \(AppVersion.displayVersion), macOS \(ProcessInfo.processInfo.operatingSystemVersionString)",
             category: "startup"

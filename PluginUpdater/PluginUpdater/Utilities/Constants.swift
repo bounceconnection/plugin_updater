@@ -15,6 +15,9 @@ enum Constants {
         static let launchAtLogin = "launchAtLogin"
         static let lastScanDate = "lastScanDate"
         static let hasCompletedOnboarding = "hasCompletedOnboarding"
+        static let notifyNewPlugins = "notifyNewPlugins"
+        static let notifyUpdatedPlugins = "notifyUpdatedPlugins"
+        static let notifyRemovedPlugins = "notifyRemovedPlugins"
     }
 
     enum NotificationIdentifiers {
