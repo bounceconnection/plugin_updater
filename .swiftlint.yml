@@ -1,9 +1,9 @@
 included:
-  - PluginUpdater/PluginUpdater
-  - PluginUpdater/PluginUpdaterTests
+  - PluginUpdater/Pluginventory
+  - PluginUpdater/PluginventoryTests
 
 excluded:
-  - PluginUpdater/PluginUpdater/Resources
+  - PluginUpdater/Pluginventory/Resources
 
 disabled_rules:
   - trailing_whitespace

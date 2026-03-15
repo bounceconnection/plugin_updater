@@ -1,7 +1,7 @@
 ---
 name: changelog-generator
 description: >
-  Generate and maintain a CHANGELOG.md for PluginUpdater from git history using Keep a Changelog
+  Generate and maintain a CHANGELOG.md for Pluginventory from git history using Keep a Changelog
   format. Use whenever the user asks to: generate or update a changelog, write release notes,
   prepare for a release, summarize what changed between versions or since a tag, document what
   shipped, determine version bump (patch/minor/major), or create a CHANGELOG.md from scratch.
@@ -11,7 +11,7 @@ description: >
   or CI/CD workflow setup — those are different tasks.
 ---
 
-# Changelog Generator for PluginUpdater
+# Changelog Generator for Pluginventory
 
 This skill generates and maintains a CHANGELOG.md following the
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format, combined with
@@ -24,7 +24,7 @@ The changelog uses this structure:
 ```markdown
 # Changelog
 
-All notable changes to PluginUpdater are documented in this file.
+All notable changes to Pluginventory are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).

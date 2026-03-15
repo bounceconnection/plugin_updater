@@ -30,7 +30,7 @@ jobs:
           allowed_bots: 'claude[bot]'
           trigger_phrase: "/claude"
           prompt: |
-            You are working on PluginUpdater, a native macOS SwiftUI app for managing audio plugin updates (VST3, AU, CLAP).
+            You are working on Pluginventory, a native macOS SwiftUI app for managing audio plugin updates (VST3, AU, CLAP).
 
             A GitHub issue has been filed above. Your job:
 
@@ -40,7 +40,7 @@ jobs:
             4. Write tests for your changes:
                - Add unit tests that prove the new behavior works as expected
                - Cover important edge cases and error conditions
-               - Place tests in the appropriate test file under PluginUpdater/PluginUpdaterTests/
+               - Place tests in the appropriate test file under PluginUpdater/PluginventoryTests/
                - Follow existing test patterns (XCTest, @Suite, in-memory SwiftData containers)
             5. Make sure the project builds: run `cd PluginUpdater && swift build`
             6. Run ALL tests to verify nothing is broken: `cd PluginUpdater && swift test`
@@ -51,9 +51,9 @@ jobs:
             - Swift/SwiftUI, SwiftData, macOS 14+, no third-party dependencies
             - Build: `cd PluginUpdater && swift build` / `swift test`
             - Xcode project: `cd PluginUpdater && xcodegen generate` (run if you add/remove files)
-            - Views are in PluginUpdater/PluginUpdater/Views/
-            - Services in PluginUpdater/PluginUpdater/Services/
-            - Models in PluginUpdater/PluginUpdater/Models/
-            - Tests in PluginUpdater/PluginUpdaterTests/
-            - Resources (JSON configs, assets) in PluginUpdater/PluginUpdater/Resources/
+            - Views are in PluginUpdater/Pluginventory/Views/
+            - Services in PluginUpdater/Pluginventory/Services/
+            - Models in PluginUpdater/Pluginventory/Models/
+            - Tests in PluginUpdater/PluginventoryTests/
+            - Resources (JSON configs, assets) in PluginUpdater/Pluginventory/Resources/
           claude_args: "--model claude-sonnet-4-6 --allowedTools 'Bash(git:*)' 'Bash(swift:*)' 'Bash(xcodegen:*)' 'Bash(gh:*)' 'Bash(ls:*)' 'Bash(mkdir:*)' 'Bash(cp:*)' 'Bash(mv:*)' 'Bash(cat:*)' 'Bash(cd:*)' 'Edit' 'Write' 'Read' 'Glob' 'Grep'"

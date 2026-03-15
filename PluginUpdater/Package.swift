@@ -2,23 +2,23 @@
 import PackageDescription
 
 let package = Package(
-    name: "PluginUpdater",
+    name: "Pluginventory",
     platforms: [
         .macOS(.v14)
     ],
     targets: [
         .executableTarget(
-            name: "PluginUpdater",
+            name: "Pluginventory",
             dependencies: [],
-            path: "PluginUpdater",
+            path: "Pluginventory",
             resources: [
                 .process("Resources")
             ]
         ),
         .testTarget(
-            name: "PluginUpdaterTests",
-            dependencies: ["PluginUpdater"],
-            path: "PluginUpdaterTests"
+            name: "PluginventoryTests",
+            dependencies: ["Pluginventory"],
+            path: "PluginventoryTests"
         )
     ]
 )

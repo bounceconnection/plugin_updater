@@ -1,7 +1,7 @@
 ---
 name: swift-testing
 description: >
-  Write and maintain tests for PluginUpdater using Swift Testing (@Suite, @Test, #expect — NOT
+  Write and maintain tests for Pluginventory using Swift Testing (@Suite, @Test, #expect — NOT
   XCTest). Use whenever: writing new test files, adding test coverage for models/services/views,
   creating mock objects or test fixtures, testing actors or async code, writing regression tests
   for bug fixes, adding edge case coverage, asking about mocking strategy (protocol-based mocks,
@@ -11,9 +11,9 @@ description: >
   uses Swift Testing exclusively — never generate XCTest code (no XCTAssert, no XCTestCase).
 ---
 
-# Swift Testing for PluginUpdater
+# Swift Testing for Pluginventory
 
-This skill covers testing conventions for the PluginUpdater project using the
+This skill covers testing conventions for the Pluginventory project using the
 **Swift Testing** framework (not XCTest). Swift Testing is Apple's modern test
 framework with expressive macros and better ergonomics.
 
@@ -23,7 +23,7 @@ framework with expressive macros and better ergonomics.
 
 ```swift
 import Testing
-@testable import PluginUpdater
+@testable import Pluginventory
 
 @Suite("Plugin Format Tests")
 struct PluginFormatTests {
@@ -79,7 +79,7 @@ let first = try #require(results.first)
 ### Directory Structure
 
 ```
-PluginUpdaterTests/
+PluginventoryTests/
   Models/           # Tests for data models, enums, Codable types
   Services/         # Tests for actors, extractors, resolvers
   Views/            # Tests for view logic (not snapshot tests)
@@ -219,7 +219,7 @@ struct MockVersionChecker: VersionChecking {
 ```bash
 # Via xcodebuild (preferred in this environment)
 cd ~/plugin_updater/PluginUpdater
-xcodebuild test -project PluginUpdater.xcodeproj -scheme PluginUpdater -destination 'platform=macOS'
+xcodebuild test -project Pluginventory.xcodeproj -scheme Pluginventory -destination 'platform=macOS'
 
 # Or use the xcodebuild MCP tool
 ```

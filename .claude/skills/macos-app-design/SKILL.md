@@ -1,7 +1,7 @@
 ---
 name: macos-app-design
 description: >
-  macOS SwiftUI design patterns and Human Interface Guidelines for PluginUpdater. Use whenever
+  macOS SwiftUI design patterns and Human Interface Guidelines for Pluginventory. Use whenever
   building new views, designing UI layouts, adding or modifying navigation (sidebar, split view,
   inspector), working with the menu bar popover, creating or editing settings tabs, adding
   toolbar buttons, designing empty states, creating detail panels, or discussing any UX decision.
@@ -12,23 +12,23 @@ description: >
   generating changelogs, backend service architecture, or pure data model questions.
 ---
 
-# macOS App Design for PluginUpdater
+# macOS App Design for Pluginventory
 
 This skill covers macOS-specific SwiftUI patterns and design conventions used in
-PluginUpdater. The app follows Apple's Human Interface Guidelines (HIG) for macOS
+Pluginventory. The app follows Apple's Human Interface Guidelines (HIG) for macOS
 while using modern SwiftUI APIs.
 
 ## App Architecture
 
-PluginUpdater is a **multi-scene macOS app** with three presentation surfaces:
+Pluginventory is a **multi-scene macOS app** with three presentation surfaces:
 
 ```swift
 @main
-struct PluginUpdaterApp: App {
+struct PluginventoryApp: App {
     var body: some Scene {
         WindowGroup { DashboardView() }         // Main window
         Settings { SettingsView() }              // Preferences (⌘,)
-        MenuBarExtra("PluginUpdater", ...) {     // Menu bar icon
+        MenuBarExtra("Pluginventory", ...) {     // Menu bar icon
             MenuBarPopoverView()
         }
         .menuBarExtraStyle(.window)
@@ -37,7 +37,7 @@ struct PluginUpdaterApp: App {
 ```
 
 ### When to Use Each Scene Type
-- **WindowGroup**: Main content windows. PluginUpdater has one: the dashboard.
+- **WindowGroup**: Main content windows. Pluginventory has one: the dashboard.
 - **Settings**: macOS preferences window. Opens via ⌘, or app menu. Use `TabView` inside.
 - **MenuBarExtra**: Persistent menu bar presence. Use `.window` style for rich content, `.menu` for simple lists.
 
@@ -199,7 +199,7 @@ struct SettingsView: View {
 The menu bar popover provides a quick summary without opening the main window:
 
 ```swift
-MenuBarExtra("PluginUpdater", systemImage: "puzzlepiece.extension") {
+MenuBarExtra("Pluginventory", systemImage: "puzzlepiece.extension") {
     MenuBarPopoverView()
 }
 .menuBarExtraStyle(.window)  // Rich content popover, not just a menu

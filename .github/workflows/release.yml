@@ -32,7 +32,7 @@ jobs:
       - name: Locate installer artifact
         id: pkg
         run: |
-          PKG_PATH="$(ls build/PluginUpdater-*.pkg | head -1)"
+          PKG_PATH="$(ls build/Pluginventory-*.pkg | head -1)"
           echo "PATH=$PKG_PATH" >> "$GITHUB_OUTPUT"
           echo "NAME=$(basename "$PKG_PATH")" >> "$GITHUB_OUTPUT"
 
@@ -110,7 +110,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: "Plugin Updater ${{ steps.version.outputs.VERSION }}"
+          name: "Pluginventory ${{ steps.version.outputs.VERSION }}"
           body_path: /tmp/release-body.md
           files: ${{ steps.pkg.outputs.PATH }}
           fail_on_unmatched_files: true

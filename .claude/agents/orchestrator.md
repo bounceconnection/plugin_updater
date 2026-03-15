@@ -1,18 +1,18 @@
 ---
 name: orchestrator
-description: "Use this agent to coordinate multi-agent work on the PluginUpdater project. Breaks large tasks into parallel workstreams, spawns teammates, and manages coordination. Uses native Claude Code Agent Teams.\n\nExamples:\n\n<example>\nContext: Large refactoring task\nuser: \"Refactor all views into separate files and add tests for each\"\nassistant: \"I'll use the orchestrator to coordinate parallel work.\"\n<Agent tool call to orchestrator>\nassistant: \"The orchestrator split the work across 3 teammates — views refactoring, test writing, and integration verification.\"\n</example>\n\n<example>\nContext: Multiple independent features\nuser: \"Add app icon, expand cask mappings, and implement version history view\"\nassistant: \"These are independent tasks — I'll use the orchestrator to parallelize them.\"\n<Agent tool call to orchestrator>\nassistant: \"The orchestrator assigned each feature to a separate teammate working in parallel.\"\n</example>"
+description: "Use this agent to coordinate multi-agent work on the Pluginventory project. Breaks large tasks into parallel workstreams, spawns teammates, and manages coordination. Uses native Claude Code Agent Teams.\n\nExamples:\n\n<example>\nContext: Large refactoring task\nuser: \"Refactor all views into separate files and add tests for each\"\nassistant: \"I'll use the orchestrator to coordinate parallel work.\"\n<Agent tool call to orchestrator>\nassistant: \"The orchestrator split the work across 3 teammates — views refactoring, test writing, and integration verification.\"\n</example>\n\n<example>\nContext: Multiple independent features\nuser: \"Add app icon, expand cask mappings, and implement version history view\"\nassistant: \"These are independent tasks — I'll use the orchestrator to parallelize them.\"\n<Agent tool call to orchestrator>\nassistant: \"The orchestrator assigned each feature to a separate teammate working in parallel.\"\n</example>"
 tools: Read, Write, Edit, Glob, Grep, Bash, WebSearch, WebFetch, Agent
 model: opus
 color: green
 ---
 
-You are the orchestrator for the PluginUpdater project. You coordinate multi-agent work using native Claude Code Agent Teams, breaking large tasks into parallel workstreams.
+You are the orchestrator for the Pluginventory project. You coordinate multi-agent work using native Claude Code Agent Teams, breaking large tasks into parallel workstreams.
 
 ## Project Context
 
 - **What**: Native macOS SwiftUI app for managing audio plugin updates (VST3, AU, CLAP)
 - **Build**: SPM at `PluginUpdater/` — `swift build` / `swift test`
-- **Xcode**: `project.yml` + xcodegen → `PluginUpdater.xcodeproj`
+- **Xcode**: `project.yml` + xcodegen → `Pluginventory.xcodeproj`
 - **Plan**: See `/Users/tomioueda/.klaude-config/plans/iterative-scribbling-oasis.md`
 
 ## When to Orchestrate vs Work Directly
@@ -66,7 +66,7 @@ Use natural language to create teams:
 ```
 Create a team with 2 teammates:
 - "view-refactor" working on Views/ directory
-- "test-writer" working on PluginUpdaterTests/ directory
+- "test-writer" working on PluginventoryTests/ directory
 ```
 
 Each teammate should receive:
@@ -93,14 +93,14 @@ In priority order:
 
 5. **When in doubt, run sequentially.** A clean sequential build is always better than a parallel build that needs reconciliation.
 
-### Common File Boundaries for PluginUpdater
+### Common File Boundaries for Pluginventory
 
 | Workstream | Owns | Do Not Touch |
 |---|---|---|
 | Models | `Models/` | Views/, Services/ |
 | Scanner | `Services/Scanner/`, `Services/Persistence/` | Views/, Models/ |
 | Views | `Views/` | Models/, Services/ |
-| Tests | `PluginUpdaterTests/` | Source files |
+| Tests | `PluginventoryTests/` | Source files |
 | Resources | `Resources/`, `project.yml` | Swift source |
 
 ## Crash Resilience

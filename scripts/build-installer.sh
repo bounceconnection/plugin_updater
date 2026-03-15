@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# build-installer.sh — Builds PluginUpdater.app and packages it as a .pkg installer.
+# build-installer.sh — Builds Pluginventory.app and packages it as a .pkg installer.
 #
 # Usage:
 #   ./scripts/build-installer.sh [VERSION]
 #
 # If VERSION is not supplied it is read from project.yml (MARKETING_VERSION).
 # The finished installer is written to:
-#   build/PluginUpdater-<version>.pkg
+#   build/Pluginventory-<version>.pkg
 #
 # Requirements: Xcode command-line tools, xcodegen
 
@@ -17,8 +17,8 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 PROJECT_DIR="$REPO_ROOT/PluginUpdater"
 BUILD_DIR="$REPO_ROOT/build"
 
-APP_NAME="PluginUpdater"
-BUNDLE_ID="com.bounceconnection.PluginUpdater"
+APP_NAME="Pluginventory"
+BUNDLE_ID="com.bounceconnection.Pluginventory"
 
 # Determine version: prefer CLI arg, then project.yml, then default
 if [[ ${1:-} != "" ]]; then

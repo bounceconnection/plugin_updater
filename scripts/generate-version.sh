@@ -6,7 +6,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-OUTPUT_DIR="$REPO_ROOT/PluginUpdater/PluginUpdater/Generated"
+OUTPUT_DIR="$REPO_ROOT/PluginUpdater/Pluginventory/Generated"
 OUTPUT_FILE="$OUTPUT_DIR/AppVersion.swift"
 
 mkdir -p "$OUTPUT_DIR"

@@ -1,4 +1,4 @@
-# Plugin Updater
+# Pluginventory
 
 A macOS app that scans your installed audio plugins (AU, CLAP, VST2, VST3), tracks versions, checks for updates, and analyzes Ableton Live projects to identify missing plugins.
 
@@ -31,18 +31,18 @@ A macOS app that scans your installed audio plugins (AU, CLAP, VST2, VST3), trac
 
 ### Download
 
-Download the latest `.pkg` installer from the [Releases page](https://github.com/bounceconnection/plugin_updater/releases). Double-click to install to `/Applications`.
+Download the latest `.pkg` installer from the [Releases page](https://github.com/bounceconnection/pluginventory/releases). Double-click to install to `/Applications`.
 
 > **Note:** Builds are unsigned. If macOS blocks the installer, right-click the `.pkg` → **Open** → **Open**.
 
 ### Build from Source
 
 ```bash
-git clone https://github.com/bounceconnection/plugin_updater.git
-cd plugin_updater/PluginUpdater
+git clone https://github.com/bounceconnection/pluginventory.git
+cd pluginventory/PluginUpdater
 brew install xcodegen
 xcodegen generate
-open PluginUpdater.xcodeproj
+open Pluginventory.xcodeproj
 # Press Cmd+R to build and run
 ```
 
@@ -57,12 +57,12 @@ open PluginUpdater.xcodeproj
 
 ## How Update Checking Works
 
-Plugin Updater maps bundle ID prefixes to [Homebrew Cask](https://formulae.brew.sh/) names, queries the API for the latest version, and compares against your installed version. The mappings file (`Resources/cask_mappings.json`) can be extended for additional vendors.
+Pluginventory maps bundle ID prefixes to [Homebrew Cask](https://formulae.brew.sh/) names, queries the API for the latest version, and compares against your installed version. The mappings file (`Resources/cask_mappings.json`) can be extended for additional vendors.
 
 ## Architecture
 
 ```
-PluginUpdater/
+Pluginventory/
   App/                        # Entry point, observable state, scan orchestration
   Models/                     # SwiftData models (Plugin, AbletonProject, ScanLocation, etc.)
   Services/
@@ -100,13 +100,13 @@ PluginUpdater/
 Enable verbose per-plugin matching logs:
 
 ```bash
-defaults write com.bounceconnection.PluginUpdater debugVerboseLogging -bool YES
+defaults write com.bounceconnection.Pluginventory debugVerboseLogging -bool YES
 ```
 
-Logs are written to `~/Library/Logs/PluginUpdater/` (daily rolling, kept 7 days). To disable:
+Logs are written to `~/Library/Logs/Pluginventory/` (daily rolling, kept 7 days). To disable:
 
 ```bash
-defaults delete com.bounceconnection.PluginUpdater debugVerboseLogging
+defaults delete com.bounceconnection.Pluginventory debugVerboseLogging
 ```
 
 ## License

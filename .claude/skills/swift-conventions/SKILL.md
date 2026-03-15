@@ -1,7 +1,7 @@
 ---
 name: swift-conventions
 description: >
-  Swift language patterns, concurrency conventions, and Xcode project structure for PluginUpdater.
+  Swift language patterns, concurrency conventions, and Xcode project structure for Pluginventory.
   Use whenever writing new Swift files, adding models or services, refactoring actors, or reviewing
   code quality. Trigger on: creating new types (actors, models, extensions), choosing between
   SwiftData vs UserDefaults, structuring concurrency (actors, TaskGroup, @MainActor), file placement
@@ -11,10 +11,10 @@ description: >
   build systems, asks about third-party packages, or wants to add caching/mapping JSON files.
 ---
 
-# Swift Conventions for PluginUpdater
+# Swift Conventions for Pluginventory
 
 This skill encodes the Swift language patterns, naming conventions, and Xcode project
-conventions used in the PluginUpdater macOS app. Follow these when writing or reviewing
+conventions used in the Pluginventory macOS app. Follow these when writing or reviewing
 any Swift code in this repo.
 
 ## Language Version & Targets
@@ -267,7 +267,7 @@ Domain objects with relationships and history (plugins, versions, vendors) go in
 After creating any new `.swift` file:
 1. Place it in the correct subdirectory per the file organization above
 2. Run `cd ~/plugin_updater/PluginUpdater && xcodegen generate`
-3. If it's a test file, ensure it's under `PluginUpdaterTests/` mirroring the source structure
+3. If it's a test file, ensure it's under `PluginventoryTests/` mirroring the source structure
 
 ## What NOT to Do
 

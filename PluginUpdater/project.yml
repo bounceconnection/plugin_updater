@@ -1,4 +1,4 @@
-name: PluginUpdater
+name: Pluginventory
 options:
   bundleIdPrefix: com.bounceconnection
   deploymentTarget:
@@ -7,29 +7,29 @@ options:
   createIntermediateGroups: true
 
 targets:
-  PluginUpdater:
+  Pluginventory:
     type: application
     platform: macOS
     sources:
-      - path: PluginUpdater
+      - path: Pluginventory
         excludes:
           - "Resources/**"
-      - path: PluginUpdater/Resources
+      - path: Pluginventory/Resources
         buildPhase: resources
     entitlements:
-      path: PluginUpdater/PluginUpdater.entitlements
+      path: Pluginventory/Pluginventory.entitlements
       properties:
         com.apple.security.network.client: true
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.bounceconnection.PluginUpdater
-        PRODUCT_NAME: PluginUpdater
+        PRODUCT_BUNDLE_IDENTIFIER: com.bounceconnection.Pluginventory
+        PRODUCT_NAME: Pluginventory
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "1"
         SWIFT_VERSION: "5.9"
         MACOSX_DEPLOYMENT_TARGET: "14.0"
         GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_CFBundleDisplayName: "Plugin Updater"
+        INFOPLIST_KEY_CFBundleDisplayName: "Pluginventory"
         INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.utilities"
         INFOPLIST_KEY_LSUIElement: NO
         ENABLE_HARDENED_RUNTIME: YES
@@ -40,18 +40,18 @@ targets:
         script: |
           "${PROJECT_DIR}/../scripts/generate-version.sh"
         outputFiles:
-          - $(SRCROOT)/PluginUpdater/Generated/AppVersion.swift
+          - $(SRCROOT)/Pluginventory/Generated/AppVersion.swift
 
-  PluginUpdaterTests:
+  PluginventoryTests:
     type: bundle.unit-test
     platform: macOS
     sources:
-      - path: PluginUpdaterTests
+      - path: PluginventoryTests
     dependencies:
-      - target: PluginUpdater
+      - target: Pluginventory
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.bounceconnection.PluginUpdaterTests
+        PRODUCT_BUNDLE_IDENTIFIER: com.bounceconnection.PluginventoryTests
         SWIFT_VERSION: "5.9"
         MACOSX_DEPLOYMENT_TARGET: "14.0"
         GENERATE_INFOPLIST_FILE: YES
