@@ -30,6 +30,8 @@ struct PluginRow: Identifiable {
     /// 1 = has download link, 0 = no link. For sorting.
     var hasDownload: Int { downloadURL != nil ? 1 : 0 }
     var architectureDisplay: String { plugin.architectureDisplayString }
+    let projectCount: Int
+    let instanceCount: Int
     var fileSize: Int64 { plugin.fileSize }
     var fileSizeDisplay: String { ByteCountFormatter.string(fromByteCount: plugin.fileSize, countStyle: .file) }
     var dateAdded: Date {
@@ -84,6 +86,8 @@ struct DashboardView: View {
         "architectureDisplay": \PluginRow.architectureDisplay,
         "fileSize": \PluginRow.fileSize,
         "dateAdded": \PluginRow.dateAdded,
+        "projectCount": \PluginRow.projectCount,
+        "instanceCount": \PluginRow.instanceCount,
     ]
 
     private static func restoredPluginSortOrder() -> [KeyPathComparator<PluginRow>] {
@@ -103,6 +107,8 @@ struct DashboardView: View {
         case "architectureDisplay": return [KeyPathComparator(\PluginRow.architectureDisplay, order: order)]
         case "fileSize": return [KeyPathComparator(\PluginRow.fileSize, order: order)]
         case "dateAdded": return [KeyPathComparator(\PluginRow.dateAdded, order: order)]
+        case "projectCount": return [KeyPathComparator(\PluginRow.projectCount, order: order)]
+        case "instanceCount": return [KeyPathComparator(\PluginRow.instanceCount, order: order)]
         default: return [KeyPathComparator(\PluginRow.name)]
         }
     }
@@ -156,7 +162,7 @@ struct DashboardView: View {
     }
 
     /// Filtered + sorted rows for the Table, computed once per body evaluation.
-    private func computeRows(manifest: [String: UpdateManifestEntry]) -> [PluginRow] {
+    private func computeRows(manifest: [String: UpdateManifestEntry], projectCounts: [String: Int], instanceCounts: [String: Int]) -> [PluginRow] {
         var result = plugins
 
         if sidebarSelection == .hidden {
@@ -195,13 +201,16 @@ struct DashboardView: View {
         }
 
         let rows = result.map { plugin -> PluginRow in
+            let key = plugin.name.lowercased()
+            let projCount = projectCounts[key, default: 0]
+            let instCount = instanceCounts[key, default: 0]
             if let entry = manifest[plugin.bundleIdentifier] {
                 let hasUpdate = !entry.latestVersion.isEmpty &&
                     entry.latestVersion.isNewerVersion(than: plugin.currentVersion)
                 let displayVersion = entry.latestVersion.isEmpty ? "—" : entry.latestVersion
-                return PluginRow(plugin: plugin, availableVersion: displayVersion, hasUpdate: hasUpdate, downloadURL: entry.downloadURL)
+                return PluginRow(plugin: plugin, availableVersion: displayVersion, hasUpdate: hasUpdate, downloadURL: entry.downloadURL, projectCount: projCount, instanceCount: instCount)
             }
-            return PluginRow(plugin: plugin, availableVersion: "—", hasUpdate: false, downloadURL: nil)
+            return PluginRow(plugin: plugin, availableVersion: "—", hasUpdate: false, downloadURL: nil, projectCount: projCount, instanceCount: instCount)
         }
 
         return rows.sorted(using: sortOrder)
@@ -300,13 +309,31 @@ struct DashboardView: View {
         return names
     }
 
+    /// Computes per-plugin project counts and instance counts in a single pass.
+    private func computePluginUsageData() -> (projects: [String: Int], instances: [String: Int]) {
+        var projectCounts: [String: Int] = [:]
+        var instanceCounts: [String: Int] = [:]
+        for project in abletonProjects {
+            var seenInProject: Set<String> = []
+            for pp in project.plugins where pp.isInstalled {
+                let key = pp.pluginName.lowercased()
+                instanceCounts[key, default: 0] += pp.instanceCount
+                if seenInProject.insert(key).inserted {
+                    projectCounts[key, default: 0] += 1
+                }
+            }
+        }
+        return (projectCounts, instanceCounts)
+    }
+
     // MARK: - Body
 
     var body: some View {
         // Compute once per body evaluation — reused by Table, overlay, and sidebar.
         let manifest = appState.manifestEntries
         let counts = computeSidebarCounts(manifest: manifest)
-        let rows = computeRows(manifest: manifest)
+        let usageData = computePluginUsageData()
+        let rows = computeRows(manifest: manifest, projectCounts: usageData.projects, instanceCounts: usageData.instances)
 
         NavigationSplitView {
             List(selection: $sidebarSelection) {
@@ -432,58 +459,72 @@ struct DashboardView: View {
     @ViewBuilder
     private func pluginTableDetail(rows: [PluginRow], manifest: [String: UpdateManifestEntry]) -> some View {
         Table(rows, selection: $selectedPluginIDs, sortOrder: $sortOrder) {
-            TableColumn("Name", value: \PluginRow.name) { (row: PluginRow) in
-                Text(row.name)
-            }
-            TableColumn("Vendor", value: \PluginRow.vendorName) { (row: PluginRow) in
-                Text(row.vendorName)
-            }
-            TableColumn("Format", value: \PluginRow.formatRawValue) { (row: PluginRow) in
-                PluginFormatBadge(format: row.plugin.format)
-            }
-            .width(min: 50, ideal: 60, max: 80)
-            TableColumn("Installed", value: \PluginRow.currentVersion) { (row: PluginRow) in
-                Text(row.currentVersion)
-                    .monospacedDigit()
-            }
-            .width(min: 60, ideal: 80, max: 120)
-            TableColumn("Available", value: \PluginRow.updatePriority) { (row: PluginRow) in
-                AvailableVersionCell(
-                    availableVersion: row.availableVersion,
-                    hasUpdate: row.hasUpdate
-                )
-            }
-            .width(min: 60, ideal: 80, max: 120)
-            TableColumn("Download", value: \PluginRow.hasDownload) { (row: PluginRow) in
-                if let urlString = row.downloadURL, let url = URL(string: urlString) {
-                    Link(destination: url) {
-                        Label("Get", systemImage: "arrow.down.circle")
-                            .labelStyle(.titleAndIcon)
-                    }
-                    .buttonStyle(.borderless)
+            Group {
+                TableColumn("Name", value: \PluginRow.name) { (row: PluginRow) in
+                    Text(row.name)
                 }
-            }
-            .width(min: 50, ideal: 70, max: 90)
-            TableColumn("Architecture", value: \PluginRow.architectureDisplay) { (row: PluginRow) in
-                HStack(spacing: 4) {
-                    Text(row.architectureDisplay)
-                    if row.plugin.isLegacyArchitecture {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.yellow)
-                            .help("Legacy architecture — may not run natively")
+                TableColumn("Vendor", value: \PluginRow.vendorName) { (row: PluginRow) in
+                    Text(row.vendorName)
+                }
+                TableColumn("Format", value: \PluginRow.formatRawValue) { (row: PluginRow) in
+                    PluginFormatBadge(format: row.plugin.format)
+                }
+                .width(min: 50, ideal: 60, max: 80)
+                TableColumn("Installed", value: \PluginRow.currentVersion) { (row: PluginRow) in
+                    Text(row.currentVersion)
+                        .monospacedDigit()
+                }
+                .width(min: 60, ideal: 80, max: 120)
+                TableColumn("Available", value: \PluginRow.updatePriority) { (row: PluginRow) in
+                    AvailableVersionCell(
+                        availableVersion: row.availableVersion,
+                        hasUpdate: row.hasUpdate
+                    )
+                }
+                .width(min: 60, ideal: 80, max: 120)
+                TableColumn("Download", value: \PluginRow.hasDownload) { (row: PluginRow) in
+                    if let urlString = row.downloadURL, let url = URL(string: urlString) {
+                        Link(destination: url) {
+                            Label("Get", systemImage: "arrow.down.circle")
+                                .labelStyle(.titleAndIcon)
+                        }
+                        .buttonStyle(.borderless)
                     }
                 }
+                .width(min: 50, ideal: 70, max: 90)
             }
-            .width(min: 80, ideal: 100, max: 140)
-            TableColumn("Size", value: \PluginRow.fileSize) { (row: PluginRow) in
-                Text(row.fileSizeDisplay)
-                    .monospacedDigit()
+            Group {
+                TableColumn("Architecture", value: \PluginRow.architectureDisplay) { (row: PluginRow) in
+                    HStack(spacing: 4) {
+                        Text(row.architectureDisplay)
+                        if row.plugin.isLegacyArchitecture {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.yellow)
+                                .help("Legacy architecture — may not run natively")
+                        }
+                    }
+                }
+                .width(min: 80, ideal: 100, max: 140)
+                TableColumn("Size", value: \PluginRow.fileSize) { (row: PluginRow) in
+                    Text(row.fileSizeDisplay)
+                        .monospacedDigit()
+                }
+                .width(min: 50, ideal: 65, max: 90)
+                TableColumn("Date Added", value: \PluginRow.dateAdded) { (row: PluginRow) in
+                    Text(row.dateAdded.formatted(.dateTime.month(.abbreviated).day().year()))
+                }
+                .width(min: 80, ideal: 100, max: 130)
+                TableColumn("Projects", value: \PluginRow.projectCount) { (row: PluginRow) in
+                    Text("\(row.projectCount)")
+                        .monospacedDigit()
+                }
+                .width(min: 50, ideal: 70, max: 90)
+                TableColumn("Instances", value: \PluginRow.instanceCount) { (row: PluginRow) in
+                    Text("\(row.instanceCount)")
+                        .monospacedDigit()
+                }
+                .width(min: 50, ideal: 70, max: 90)
             }
-            .width(min: 50, ideal: 65, max: 90)
-            TableColumn("Date Added", value: \PluginRow.dateAdded) { (row: PluginRow) in
-                Text(row.dateAdded.formatted(.dateTime.month(.abbreviated).day().year()))
-            }
-            .width(min: 80, ideal: 100, max: 130)
         }
         .background(NSTableViewFinder.enableColumnAutoResize())
         .id(sidebarSelection)

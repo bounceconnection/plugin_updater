@@ -21,6 +21,8 @@ actor AbletonProjectParser {
         let auComponentManufacturer: String?
         let vst3TUID: String?
         let vendorName: String?
+        /// How many times this plugin appeared in a project (set during deduplication).
+        var instanceCount: Int = 1
 
         func hash(into hasher: inout Hasher) {
             hasher.combine(pluginType)
@@ -79,7 +81,16 @@ actor AbletonProjectParser {
             throw ParseError.xmlParseFailed(fileURL, errorMsg)
         }
 
-        let uniquePlugins = Array(Set(delegate.plugins))
+        // Deduplicate plugins, accumulating instance counts for duplicates.
+        var pluginCounts: [ParsedPlugin: Int] = [:]
+        for plugin in delegate.plugins {
+            pluginCounts[plugin, default: 0] += 1
+        }
+        let uniquePlugins = pluginCounts.map { (plugin, count) -> ParsedPlugin in
+            var p = plugin
+            p.instanceCount = count
+            return p
+        }
         let projectName = fileURL.deletingPathExtension().lastPathComponent
 
         if AppLogger.shared.verbose {

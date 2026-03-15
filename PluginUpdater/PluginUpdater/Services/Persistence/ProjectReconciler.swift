@@ -235,7 +235,8 @@ actor ProjectReconciler {
             vst3TUID: parsed.vst3TUID,
             vendorName: parsed.vendorName,
             matchedPluginID: matchResult.matchedPluginID,
-            isInstalled: matchResult.isInstalled
+            isInstalled: matchResult.isInstalled,
+            instanceCount: parsed.instanceCount
         )
     }
 }

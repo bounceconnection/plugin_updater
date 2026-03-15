@@ -12,6 +12,8 @@ final class AbletonProjectPlugin {
     var vendorName: String?
     var matchedPluginID: String?
     var isInstalled: Bool = false
+    /// How many times this plugin appears across tracks in the parent project.
+    var instanceCount: Int = 1
     var project: AbletonProject?
 
     init(
@@ -23,7 +25,8 @@ final class AbletonProjectPlugin {
         vst3TUID: String? = nil,
         vendorName: String? = nil,
         matchedPluginID: String? = nil,
-        isInstalled: Bool = false
+        isInstalled: Bool = false,
+        instanceCount: Int = 1
     ) {
         self.pluginName = pluginName
         self.pluginType = pluginType
@@ -34,5 +37,6 @@ final class AbletonProjectPlugin {
         self.vendorName = vendorName
         self.matchedPluginID = matchedPluginID
         self.isInstalled = isInstalled
+        self.instanceCount = instanceCount
     }
 }
