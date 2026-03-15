@@ -1,6 +1,6 @@
 # Pluginventory
 
-A native macOS app that catalogs every AU, CLAP, VST2, and VST3 plugin on your system, tracks version history, checks for updates, and shows you which plugins each Ableton project depends on. Shows most/least used plugins across all your projects.
+A native macOS app that catalogs every AU, CLAP, VST2, and VST3 plugin on your system, tracks version history, checks for updates, and shows you which plugins each Ableton project depends on. Also shows most/least used plugins across all your projects to help you consider what plugins to Marie-Kondo yourself from.
 
 ![Dashboard](screenshots/dashboard.png)
 
