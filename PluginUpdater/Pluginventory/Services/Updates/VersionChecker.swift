@@ -45,7 +45,13 @@ actor VersionChecker {
 
     /// Returns the vendor website URL for a given bundle ID, if known.
     func vendorURL(for bundleID: String) -> String? {
-        vendorURLs.first(where: { bundleID.hasPrefix($0.bundleIDPrefix) })?.url
+        guard var url = vendorURLs.first(where: { bundleID.hasPrefix($0.bundleIDPrefix) })?.url else {
+            return nil
+        }
+        if url.hasPrefix("http://") {
+            url = "https://" + url.dropFirst(7)
+        }
+        return url
     }
 
     /// Given a dictionary of [bundleID: installedVersion], queries the Homebrew API
@@ -94,7 +100,7 @@ actor VersionChecker {
                     results[plugin.bundleID] = UpdateManifestEntry(
                         bundleIdentifier: plugin.bundleID,
                         latestVersion: response.version,
-                        downloadURL: response.url ?? response.homepage,
+                        downloadURL: Self.ensureHTTPS(response.url ?? response.homepage),
                         releaseNotes: nil,
                         releaseDate: nil
                     )
@@ -106,6 +112,14 @@ actor VersionChecker {
     }
 
     // MARK: - Homebrew API
+
+    private static func ensureHTTPS(_ url: String?) -> String? {
+        guard var u = url else { return nil }
+        if u.hasPrefix("http://") {
+            u = "https://" + u.dropFirst(7)
+        }
+        return u
+    }
 
     private struct CaskAPIResponse: Codable {
         let token: String

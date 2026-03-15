@@ -50,7 +50,13 @@ actor PluginImageService {
 
     /// Returns the vendor website URL for a given bundle ID from vendor_urls.json.
     private func vendorWebsiteURL(for bundleID: String) -> String? {
-        vendorURLOverrides.first { bundleID.hasPrefix($0.bundleIDPrefix) }?.url
+        guard var url = vendorURLOverrides.first(where: { bundleID.hasPrefix($0.bundleIDPrefix) })?.url else {
+            return nil
+        }
+        if url.hasPrefix("http://") {
+            url = "https://" + url.dropFirst(7)
+        }
+        return url
     }
 
     /// Returns `true` if an image (or confirmed miss) is already cached for this plugin.
@@ -224,7 +230,11 @@ actor PluginImageService {
     // MARK: - Strategy 3: OG Image from Vendor Website
 
     private func fetchOGImage(from websiteURL: String) async -> NSImage? {
-        guard let url = URL(string: websiteURL) else { return nil }
+        var sanitized = websiteURL
+        if sanitized.hasPrefix("http://") {
+            sanitized = "https://" + sanitized.dropFirst(7)
+        }
+        guard let url = URL(string: sanitized) else { return nil }
 
         var request = URLRequest(url: url, timeoutInterval: 8)
         request.setValue(
