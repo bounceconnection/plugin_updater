@@ -18,7 +18,7 @@ PROJECT_DIR="$REPO_ROOT/PluginUpdater"
 BUILD_DIR="$REPO_ROOT/build"
 
 APP_NAME="PluginUpdater"
-BUNDLE_ID="com.tomioueda.PluginUpdater"
+BUNDLE_ID="com.bounceconnection.PluginUpdater"
 
 # Determine version: prefer CLI arg, then project.yml, then default
 if [[ ${1:-} != "" ]]; then

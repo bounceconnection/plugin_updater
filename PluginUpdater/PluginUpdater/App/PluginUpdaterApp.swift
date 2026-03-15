@@ -8,6 +8,7 @@ struct PluginUpdaterApp: App {
     @State private var appState: AppState
 
     init() {
+        PersistenceController.migrateFromOldBundleID()
         do {
             let container = try PersistenceController.makeContainer()
             self.modelContainer = container

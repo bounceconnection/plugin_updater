@@ -32,10 +32,10 @@ enum Constants {
     }
 
     enum NotificationIdentifiers {
-        static let pluginInstalled = "com.tomioueda.PluginUpdater.pluginInstalled"
-        static let pluginUpdated = "com.tomioueda.PluginUpdater.pluginUpdated"
-        static let pluginRemoved = "com.tomioueda.PluginUpdater.pluginRemoved"
-        static let scanCompleted = "com.tomioueda.PluginUpdater.scanCompleted"
+        static let pluginInstalled = "com.bounceconnection.PluginUpdater.pluginInstalled"
+        static let pluginUpdated = "com.bounceconnection.PluginUpdater.pluginUpdated"
+        static let pluginRemoved = "com.bounceconnection.PluginUpdater.pluginRemoved"
+        static let scanCompleted = "com.bounceconnection.PluginUpdater.scanCompleted"
     }
 
     enum AssetNames {

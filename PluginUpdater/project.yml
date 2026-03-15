@@ -1,6 +1,6 @@
 name: PluginUpdater
 options:
-  bundleIdPrefix: com.tomioueda
+  bundleIdPrefix: com.bounceconnection
   deploymentTarget:
     macOS: "14.0"
   xcodeVersion: "16.0"
@@ -22,7 +22,7 @@ targets:
         com.apple.security.network.client: true
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.tomioueda.PluginUpdater
+        PRODUCT_BUNDLE_IDENTIFIER: com.bounceconnection.PluginUpdater
         PRODUCT_NAME: PluginUpdater
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "1"
@@ -51,7 +51,7 @@ targets:
       - target: PluginUpdater
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.tomioueda.PluginUpdaterTests
+        PRODUCT_BUNDLE_IDENTIFIER: com.bounceconnection.PluginUpdaterTests
         SWIFT_VERSION: "5.9"
         MACOSX_DEPLOYMENT_TARGET: "14.0"
         GENERATE_INFOPLIST_FILE: YES

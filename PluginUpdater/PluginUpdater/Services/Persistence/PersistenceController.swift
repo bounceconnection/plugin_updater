@@ -2,6 +2,48 @@ import Foundation
 import SwiftData
 
 enum PersistenceController {
+    /// Migrates SwiftData store and UserDefaults from old bundle ID (`com.tomioueda.PluginUpdater`)
+    /// to new bundle ID (`com.bounceconnection.PluginUpdater`). Safe to call multiple times.
+    static func migrateFromOldBundleID() {
+        let fm = FileManager.default
+        let appSupport = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        let oldDir = appSupport.appendingPathComponent("com.tomioueda.PluginUpdater")
+        let newDir = appSupport.appendingPathComponent("com.bounceconnection.PluginUpdater")
+
+        // Move SwiftData store directory if old exists and new doesn't
+        if fm.fileExists(atPath: oldDir.path) && !fm.fileExists(atPath: newDir.path) {
+            try? fm.moveItem(at: oldDir, to: newDir)
+        }
+
+        // Migrate UserDefaults (one-time)
+        if !UserDefaults.standard.bool(forKey: "didMigrateFromOldBundleID") {
+            if let oldDefaults = UserDefaults(suiteName: "com.tomioueda.PluginUpdater") {
+                let keysToMigrate = [
+                    Constants.UserDefaultsKeys.scanFrequency,
+                    Constants.UserDefaultsKeys.notificationsEnabled,
+                    Constants.UserDefaultsKeys.manifestURL,
+                    Constants.UserDefaultsKeys.launchAtLogin,
+                    Constants.UserDefaultsKeys.lastScanDate,
+                    Constants.UserDefaultsKeys.hasCompletedOnboarding,
+                    Constants.UserDefaultsKeys.notifyNewPlugins,
+                    Constants.UserDefaultsKeys.notifyUpdatedPlugins,
+                    Constants.UserDefaultsKeys.notifyRemovedPlugins,
+                    Constants.UserDefaultsKeys.projectScanDirectories,
+                    Constants.UserDefaultsKeys.scanProjectsOnLaunch,
+                    Constants.UserDefaultsKeys.monitorProjectDirectories,
+                    Constants.UserDefaultsKeys.debugVerboseLogging,
+                    Constants.UserDefaultsKeys.checkForAppUpdates,
+                ]
+                for key in keysToMigrate {
+                    if let value = oldDefaults.object(forKey: key) {
+                        UserDefaults.standard.set(value, forKey: key)
+                    }
+                }
+            }
+            UserDefaults.standard.set(true, forKey: "didMigrateFromOldBundleID")
+        }
+    }
+
     static let modelSchema = Schema([
         Plugin.self,
         PluginVersion.self,
@@ -32,7 +74,7 @@ enum PersistenceController {
             for: .applicationSupportDirectory,
             in: .userDomainMask
         ).first!
-        let appDir = appSupport.appendingPathComponent("com.tomioueda.PluginUpdater")
+        let appDir = appSupport.appendingPathComponent("com.bounceconnection.PluginUpdater")
         try? FileManager.default.createDirectory(at: appDir, withIntermediateDirectories: true)
         return appDir.appendingPathComponent("PluginUpdater.store")
     }

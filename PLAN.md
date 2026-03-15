@@ -4,8 +4,8 @@
 Build a native macOS SwiftUI app that scans installed audio plugins (VST3, AU, CLAP), tracks their versions, monitors for changes, and provides a dashboard + menu bar interface for managing updates. The system has ~1500 plugins across all formats.
 
 ## Configuration
-- **Organization ID**: `com.tomioueda`
-- **Bundle ID**: `com.tomioueda.PluginUpdater`
+- **Organization ID**: `com.bounceconnection`
+- **Bundle ID**: `com.bounceconnection.PluginUpdater`
 - **App style**: Menu bar + dock (both)
 
 ## Tech Stack

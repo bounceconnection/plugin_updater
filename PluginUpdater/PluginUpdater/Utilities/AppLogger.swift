@@ -7,11 +7,11 @@ final class AppLogger {
     static let shared = AppLogger()
 
     /// When true, per-plugin matching details are logged. Off by default.
-    /// Toggle via `defaults write com.tomioueda.PluginUpdater debugVerboseLogging -bool YES`
+    /// Toggle via `defaults write com.bounceconnection.PluginUpdater debugVerboseLogging -bool YES`
     var verbose: Bool = false
 
-    private let osLog = Logger(subsystem: "com.tomioueda.PluginUpdater", category: "app")
-    private let queue = DispatchQueue(label: "com.tomioueda.PluginUpdater.logger", qos: .utility)
+    private let osLog = Logger(subsystem: "com.bounceconnection.PluginUpdater", category: "app")
+    private let queue = DispatchQueue(label: "com.bounceconnection.PluginUpdater.logger", qos: .utility)
     private var fileHandle: FileHandle?
     private var currentLogDate: String = ""
 

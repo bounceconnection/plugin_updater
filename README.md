@@ -100,13 +100,13 @@ PluginUpdater/
 Enable verbose per-plugin matching logs:
 
 ```bash
-defaults write com.tomioueda.PluginUpdater debugVerboseLogging -bool YES
+defaults write com.bounceconnection.PluginUpdater debugVerboseLogging -bool YES
 ```
 
 Logs are written to `~/Library/Logs/PluginUpdater/` (daily rolling, kept 7 days). To disable:
 
 ```bash
-defaults delete com.tomioueda.PluginUpdater debugVerboseLogging
+defaults delete com.bounceconnection.PluginUpdater debugVerboseLogging
 ```
 
 ## License

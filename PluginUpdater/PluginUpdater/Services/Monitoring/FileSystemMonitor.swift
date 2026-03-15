@@ -4,7 +4,7 @@ import CoreServices
 final class FileSystemMonitor {
     private var stream: FSEventStreamRef?
     private let debounceInterval: TimeInterval
-    private let queue = DispatchQueue(label: "com.tomioueda.PluginUpdater.fsmonitor", qos: .utility)
+    private let queue = DispatchQueue(label: "com.bounceconnection.PluginUpdater.fsmonitor", qos: .utility)
     private var pendingDirectories: Set<String> = []
     private var debounceWorkItem: DispatchWorkItem?
     private var monitoredDirectories: [URL] = []
