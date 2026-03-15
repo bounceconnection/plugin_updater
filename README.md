@@ -8,17 +8,13 @@ A macOS app that scans your installed audio plugins (AU, CLAP, VST2, VST3), trac
 
 - **Automatic Plugin Discovery** — Scans standard macOS audio plugin directories and reads bundle metadata (CFBundleIdentifier, version, vendor)
 - **Update Detection** — Checks for newer versions of your installed plugins via the Homebrew Formulae API
-- **In-App Update Checker** — Notifies you when a new version of PluginUpdater is available on GitHub
 - **Format Support** — Supports AU, CLAP, VST2, and VST3 plugin formats
 - **Ableton Project Scanner** — Parses .als project files to identify which plugins each project uses and flags missing ones
 - **Live Streaming Scan** — Projects appear in the table incrementally during scanning so you can start browsing immediately
 - **Multi-Select & Bulk Actions** — Cmd+click or Shift+click to select multiple plugins, then right-click for bulk operations
 - **Context Menu** — Copy Paths, Copy Full Details, Reveal in Finder, Open Publisher Website, and Hide/Unhide actions on any selection
-- **CPU Architecture Detection** — Reads Mach-O headers to show Apple Silicon, Intel 64, Universal, or legacy (Intel 32/PowerPC) status with warning badges
-- **File Size & Date Added** — Displays bundle size and filesystem creation date for each plugin
+- **CPU Architecture Detection** — Shows Apple Silicon, Intel 64, Universal, or legacy (Intel 32/PowerPC) status with warning badges
 - **Sortable Columns** — Sorts by name, vendor, format, installed version, available version, architecture, size, or date added
-- **Status Bar** — Shows total plugin count and current selection count at the bottom of the table
-- **Smart Vendor Resolution** — Normalizes inconsistent vendor names across formats (e.g., "Plugin-alliance" → "Plugin Alliance") and strips trailing copyright years (e.g., "Rob Papen 2021" → "Rob Papen")
 - **Hide Plugins** — Right-click to hide plugins you don't care about; view and unhide them from the Hidden section in the sidebar
 - **Sidebar Filtering** — Filters by format (AU, CLAP, VST2, VST3), updates available, used/unused plugins, or projects with missing plugins
 - **Detail Inspector** — Shows architecture, size, bundle ID, file path, version history, and download links for any plugin
@@ -33,105 +29,56 @@ A macOS app that scans your installed audio plugins (AU, CLAP, VST2, VST3), trac
 
 ## Installation
 
-### Download the Installer (easiest)
+### Download
 
-Download the latest **`.pkg` installer** from the [Releases page](https://github.com/bounceconnection/plugin_updater/releases):
+Download the latest `.pkg` installer from the [Releases page](https://github.com/bounceconnection/plugin_updater/releases). Double-click to install to `/Applications`.
 
-1. Download `PluginUpdater-<version>.pkg`.
-2. Double-click the file to launch the macOS Installer.
-3. Follow the prompts — the app is installed to `/Applications`.
-
-> **Gatekeeper note:** Builds from GitHub Actions are unsigned. If macOS blocks the installer, right-click the `.pkg` → **Open** → **Open** to proceed.
+> **Note:** Builds are unsigned. If macOS blocks the installer, right-click the `.pkg` → **Open** → **Open**.
 
 ### Build from Source
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/bounceconnection/plugin_updater.git
-   cd plugin_updater/PluginUpdater
-   ```
-
-2. Generate the Xcode project (requires [xcodegen](https://github.com/yonaskolb/XcodeGen)):
-   ```bash
-   brew install xcodegen
-   xcodegen generate
-   ```
-
-3. Open and build:
-   ```bash
-   open PluginUpdater.xcodeproj
-   ```
-   Then press **Cmd+R** to build and run.
-
-### Build the .pkg Installer Locally
-
 ```bash
-# Requires Xcode command-line tools and xcodegen
+git clone https://github.com/bounceconnection/plugin_updater.git
+cd plugin_updater/PluginUpdater
 brew install xcodegen
-./scripts/build-installer.sh
-# Output: build/PluginUpdater-1.0.0.pkg
-```
-
-### Alternative: Swift Package Manager
-
-```bash
-cd PluginUpdater
-swift build
+xcodegen generate
+open PluginUpdater.xcodeproj
+# Press Cmd+R to build and run
 ```
 
 ## Usage
 
-1. **Launch the app** — On first run, it automatically scans the default plugin directories:
-   - `/Library/Audio/Plug-Ins/Components/` (Audio Units)
-   - `/Library/Audio/Plug-Ins/CLAP/` (CLAP)
-   - `/Library/Audio/Plug-Ins/VST/` (VST2)
-   - `/Library/Audio/Plug-Ins/VST3/` (VST3)
-
-2. **Scan for plugins** — Click the **Scan Now** button in the toolbar to rescan all directories.
-
-3. **Check for updates** — After scanning, the app automatically queries the Homebrew Formulae API for newer versions. Plugins with available updates show a green version number in the **Available** column.
-
-4. **Filter and sort** — Use the sidebar to filter by format or show only plugins with updates. Click any column header to sort.
-
-5. **View details** — Select a plugin and click **Info** to open the detail inspector showing bundle ID, file path, version history, and download links.
-
-6. **Add scan locations** — Go to **Settings** (Cmd+,) to add custom plugin directories.
+1. **Launch** — On first run, scans the default plugin directories (`/Library/Audio/Plug-Ins/`)
+2. **Scan** — Click **Scan Now** in the toolbar to rescan
+3. **Updates** — Plugins with newer versions show a green version in the **Available** column
+4. **Filter** — Use the sidebar to filter by format, updates, or used/unused
+5. **Inspect** — Select a plugin and click **Info** for bundle ID, path, version history, and download links
+6. **Settings** — Press **Cmd+,** to add custom scan directories or configure notifications
 
 ## How Update Checking Works
 
-Plugin Updater uses a mapping of plugin bundle ID prefixes to [Homebrew Cask](https://formulae.brew.sh/) names. When you scan, it:
-
-1. Reads each plugin's `CFBundleIdentifier` and `CFBundleShortVersionString` from its `Info.plist`
-2. Matches bundle IDs against known cask mappings (e.g., `com.fabfilter.Pro-Q` -> `fabfilter-pro-q`)
-3. Queries `https://formulae.brew.sh/api/cask/<name>.json` for the latest version
-4. Compares installed vs. latest and highlights available updates
-
-The cask mappings file (`Resources/cask_mappings.json`) can be extended to support additional vendors.
+Plugin Updater maps bundle ID prefixes to [Homebrew Cask](https://formulae.brew.sh/) names, queries the API for the latest version, and compares against your installed version. The mappings file (`Resources/cask_mappings.json`) can be extended for additional vendors.
 
 ## Architecture
 
 ```
 PluginUpdater/
-  App/
-    PluginUpdaterApp.swift    # App entry point, window/menu bar setup
-    AppState.swift            # Observable state, scan orchestration
-  Models/                     # SwiftData models (Plugin, PluginVersion, ScanLocation, etc.)
-                              # CPUArchitecture enum and display helpers
+  App/                        # Entry point, observable state, scan orchestration
+  Models/                     # SwiftData models (Plugin, AbletonProject, ScanLocation, etc.)
   Services/
-    Scanner/                  # Plugin discovery, metadata extraction, Mach-O architecture detection,
-                              # Ableton project parsing, plugin matching
+    Scanner/                  # Plugin discovery, Ableton project parsing, plugin matching
     Monitoring/               # FSEvents file system monitoring
-    Persistence/              # SwiftData reconciliation with vendor name normalization
+    Persistence/              # SwiftData reconciliation, vendor name normalization
     Notifications/            # macOS notification delivery
-    Updates/                  # Homebrew API version checking, manifest management, app update checker
+    Updates/                  # Homebrew API version checking, in-app update checker
   Views/
-    Dashboard/                # Main table view with multi-select, context menu, status bar
-    Detail/                   # Plugin detail inspector with architecture and size
+    Dashboard/                # Main table with multi-select, context menu, status bar
+    Detail/                   # Plugin detail inspector
     Projects/                 # Ableton project list and detail views
-    Settings/                 # Scan paths editor, notification preferences
+    Settings/                 # Scan paths, notification preferences
     MenuBar/                  # Menu bar popover
-    Components/               # Reusable UI components (format badge, vendor link, etc.)
-  Utilities/                  # Constants, URL/String extensions
+    Components/               # Reusable UI components
+  Utilities/                  # Constants, extensions
   Resources/                  # Cask mappings, default manifest, assets
 ```
 
@@ -139,56 +86,24 @@ PluginUpdater/
 - **SwiftData** for persistence — plugins, versions, and scan locations stored locally
 - **Actor-based concurrency** — scanner, reconciler, and version checker use Swift actors for thread safety
 - **No third-party dependencies** — pure Swift/SwiftUI, ships as a single app bundle
-- **Plugin identity keyed on CFBundleIdentifier** — not file path, so moved plugins are tracked correctly
+- **Plugin identity keyed on CFBundleIdentifier** — not file path, so moved plugins track correctly
 
-## Development Workflow
+## Development
 
-### Branching
-
-- **`main`** — stable releases only. Never push directly.
-- **`dev`** — integration branch. All feature/fix PRs target `dev`.
-- Feature branches: `git checkout dev && git checkout -b feature/<description>`
-
-### CI
-
-CI runs automatically on:
-- All PRs targeting `dev` or `main`
-- All pushes to `dev`
-
-### Releasing
-
-Releases are triggered via the **Promote to Main** workflow in GitHub Actions:
-
-1. Go to **Actions → Promote to Main → Run workflow**
-2. Choose a version (or leave blank for auto-bump):
-   - **Blank** — auto-increments the patch version (e.g. `1.2.3` → `1.2.4`)
-   - **`X.Y.Z`** — uses the exact version you specify (e.g. `2.0.0` for a major release)
-3. The workflow:
-   1. Creates a PR from `dev` → `main` (or reuses an existing one)
-   2. Merges the PR into `main`
-   3. Tags the merge commit as `vX.Y.Z`
-   4. The tag triggers the **Release** workflow, which builds the `.pkg` installer and creates a GitHub Release
-
-### Version Numbering
-
-Follow [Semantic Versioning](https://semver.org/):
-- **Patch** (`1.2.3` → `1.2.4`) — bug fixes, minor improvements (default)
-- **Minor** (`1.2.4` → `1.3.0`) — new features, backward-compatible
-- **Major** (`1.3.0` → `2.0.0`) — breaking changes
+- **`main`** — stable releases. **`dev`** — integration branch. Feature branches off `dev`.
+- CI runs on all PRs targeting `dev` or `main` and all pushes to `dev`.
+- Releases: **Actions → Promote to Main → Run workflow** (auto-bumps patch, or specify `X.Y.Z`). Tags trigger the Release workflow which builds the `.pkg` installer.
+- Versioning follows [SemVer](https://semver.org/).
 
 ## Troubleshooting
 
-### Debug Logging
-
-By default, project scans produce minimal log output. To enable verbose per-plugin matching logs for troubleshooting:
+Enable verbose per-plugin matching logs:
 
 ```bash
 defaults write com.tomioueda.PluginUpdater debugVerboseLogging -bool YES
 ```
 
-Then re-run the scan. Logs are written to `~/Library/Logs/PluginUpdater/` (daily rolling files, kept for 7 days).
-
-To disable verbose logging:
+Logs are written to `~/Library/Logs/PluginUpdater/` (daily rolling, kept 7 days). To disable:
 
 ```bash
 defaults delete com.tomioueda.PluginUpdater debugVerboseLogging
@@ -196,4 +111,4 @@ defaults delete com.tomioueda.PluginUpdater debugVerboseLogging
 
 ## License
 
-This project is licensed under the [GNU General Public License v3.0](LICENSE).
+[GNU General Public License v3.0](LICENSE)
