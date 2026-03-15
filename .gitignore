@@ -18,6 +18,9 @@ build/
 # Generated files
 PluginUpdater/PluginUpdater/Generated/
 
+# Project plan (local reference only)
+PLAN.md
+
 # Claude Code (per-user)
 .claude/settings.local.json
 .claude/skills/skills-workspace/
