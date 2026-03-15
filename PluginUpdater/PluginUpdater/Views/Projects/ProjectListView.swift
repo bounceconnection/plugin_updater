@@ -21,10 +21,44 @@ struct ProjectListView: View {
     let searchText: String
     let onSelectProject: (AbletonProject) -> Void
 
-    @State private var sortOrder: [KeyPathComparator<ProjectRow>] = [
-        KeyPathComparator(\ProjectRow.name)
-    ]
+    @State private var sortOrder: [KeyPathComparator<ProjectRow>] = restoredProjectSortOrder()
     @State private var selectedProjectIDs: Set<PersistentIdentifier> = []
+
+    private static let projectColumnMap: [String: PartialKeyPath<ProjectRow>] = [
+        "name": \ProjectRow.name,
+        "abletonVersion": \ProjectRow.abletonVersion,
+        "pluginCount": \ProjectRow.pluginCount,
+        "missingCount": \ProjectRow.missingCount,
+        "lastModified": \ProjectRow.lastModified,
+        "fileSize": \ProjectRow.fileSize,
+        "filePath": \ProjectRow.filePath,
+    ]
+
+    private static func restoredProjectSortOrder() -> [KeyPathComparator<ProjectRow>] {
+        let defaults = UserDefaults.standard
+        guard let column = defaults.string(forKey: Constants.UserDefaultsKeys.projectSortColumn) else {
+            return [KeyPathComparator(\ProjectRow.name)]
+        }
+        let ascending = defaults.object(forKey: Constants.UserDefaultsKeys.projectSortAscending) as? Bool ?? true
+        let order: SortOrder = ascending ? .forward : .reverse
+        switch column {
+        case "name": return [KeyPathComparator(\ProjectRow.name, order: order)]
+        case "abletonVersion": return [KeyPathComparator(\ProjectRow.abletonVersion, order: order)]
+        case "pluginCount": return [KeyPathComparator(\ProjectRow.pluginCount, order: order)]
+        case "missingCount": return [KeyPathComparator(\ProjectRow.missingCount, order: order)]
+        case "lastModified": return [KeyPathComparator(\ProjectRow.lastModified, order: order)]
+        case "fileSize": return [KeyPathComparator(\ProjectRow.fileSize, order: order)]
+        case "filePath": return [KeyPathComparator(\ProjectRow.filePath, order: order)]
+        default: return [KeyPathComparator(\ProjectRow.name)]
+        }
+    }
+
+    private func saveProjectSortOrder() {
+        guard let first = sortOrder.first else { return }
+        let columnName = Self.projectColumnMap.first { $0.value == first.keyPath }?.key ?? "name"
+        UserDefaults.standard.set(columnName, forKey: Constants.UserDefaultsKeys.projectSortColumn)
+        UserDefaults.standard.set(first.order == .forward, forKey: Constants.UserDefaultsKeys.projectSortAscending)
+    }
 
     private var filteredRows: [ProjectRow] {
         var result = projects
@@ -118,6 +152,9 @@ struct ProjectListView: View {
                         )
                     )
                 }
+            }
+            .onChange(of: sortOrder) { _, _ in
+                saveProjectSortOrder()
             }
 
             HStack {

@@ -23,6 +23,10 @@ enum Constants {
         static let monitorProjectDirectories = "monitorProjectDirectories"
         static let debugVerboseLogging = "debugVerboseLogging"
         static let checkForAppUpdates = "checkForAppUpdates"
+        static let pluginSortColumn = "pluginSortColumn"
+        static let pluginSortAscending = "pluginSortAscending"
+        static let projectSortColumn = "projectSortColumn"
+        static let projectSortAscending = "projectSortAscending"
     }
 
     enum AppUpdateConfig {

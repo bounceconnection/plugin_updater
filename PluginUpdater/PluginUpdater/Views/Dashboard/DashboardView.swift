@@ -68,10 +68,51 @@ struct DashboardView: View {
     @State private var searchText = ""
     @State private var debouncedSearchText = ""
     @State private var searchTask: Task<Void, Never>?
-    @State private var sortOrder = [KeyPathComparator(\PluginRow.name)]
+    @State private var sortOrder = restoredPluginSortOrder()
     @State private var selectedPluginIDs: Set<PersistentIdentifier> = []
     @State private var showInspector = false
     @State private var selectedProjectForDetail: AbletonProject?
+
+    /// Maps persisted column name strings to their KeyPathComparator.
+    private static let pluginColumnMap: [String: PartialKeyPath<PluginRow>] = [
+        "name": \PluginRow.name,
+        "vendorName": \PluginRow.vendorName,
+        "formatRawValue": \PluginRow.formatRawValue,
+        "currentVersion": \PluginRow.currentVersion,
+        "updatePriority": \PluginRow.updatePriority,
+        "hasDownload": \PluginRow.hasDownload,
+        "architectureDisplay": \PluginRow.architectureDisplay,
+        "fileSize": \PluginRow.fileSize,
+        "dateAdded": \PluginRow.dateAdded,
+    ]
+
+    private static func restoredPluginSortOrder() -> [KeyPathComparator<PluginRow>] {
+        let defaults = UserDefaults.standard
+        guard let column = defaults.string(forKey: Constants.UserDefaultsKeys.pluginSortColumn) else {
+            return [KeyPathComparator(\PluginRow.name)]
+        }
+        let ascending = defaults.object(forKey: Constants.UserDefaultsKeys.pluginSortAscending) as? Bool ?? true
+        let order: SortOrder = ascending ? .forward : .reverse
+        switch column {
+        case "name": return [KeyPathComparator(\PluginRow.name, order: order)]
+        case "vendorName": return [KeyPathComparator(\PluginRow.vendorName, order: order)]
+        case "formatRawValue": return [KeyPathComparator(\PluginRow.formatRawValue, order: order)]
+        case "currentVersion": return [KeyPathComparator(\PluginRow.currentVersion, order: order)]
+        case "updatePriority": return [KeyPathComparator(\PluginRow.updatePriority, order: order)]
+        case "hasDownload": return [KeyPathComparator(\PluginRow.hasDownload, order: order)]
+        case "architectureDisplay": return [KeyPathComparator(\PluginRow.architectureDisplay, order: order)]
+        case "fileSize": return [KeyPathComparator(\PluginRow.fileSize, order: order)]
+        case "dateAdded": return [KeyPathComparator(\PluginRow.dateAdded, order: order)]
+        default: return [KeyPathComparator(\PluginRow.name)]
+        }
+    }
+
+    private func savePluginSortOrder() {
+        guard let first = sortOrder.first else { return }
+        let columnName = Self.pluginColumnMap.first { $0.value == first.keyPath }?.key ?? "name"
+        UserDefaults.standard.set(columnName, forKey: Constants.UserDefaultsKeys.pluginSortColumn)
+        UserDefaults.standard.set(first.order == .forward, forKey: Constants.UserDefaultsKeys.pluginSortAscending)
+    }
 
     // MARK: - Computed helpers
 
@@ -328,6 +369,9 @@ struct DashboardView: View {
             }
         }
         .frame(minWidth: 700, minHeight: 400)
+        .onChange(of: sortOrder) { _, _ in
+            savePluginSortOrder()
+        }
     }
 
     // MARK: - Project Detail
