@@ -31,13 +31,13 @@ The project uses **xcodegen** (`project.yml`) to generate the Xcode project. Nev
 `.xcodeproj` files directly. After adding or removing `.swift` files:
 
 ```bash
-cd ~/plugin_updater/PluginUpdater && xcodegen generate
+cd ~/pluginventory/Pluginventory && xcodegen generate
 ```
 
 ### File Organization
 
 ```
-PluginUpdater/
+Pluginventory/
   App/           # @main entry point + AppState coordinator
   Models/        # SwiftData @Model types + Codable structs + enums
   Services/      # Actor-based business logic, grouped by domain
@@ -266,7 +266,7 @@ Domain objects with relationships and history (plugins, versions, vendors) go in
 
 After creating any new `.swift` file:
 1. Place it in the correct subdirectory per the file organization above
-2. Run `cd ~/plugin_updater/PluginUpdater && xcodegen generate`
+2. Run `cd ~/pluginventory/Pluginventory && xcodegen generate`
 3. If it's a test file, ensure it's under `PluginventoryTests/` mirroring the source structure
 
 ## What NOT to Do

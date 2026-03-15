@@ -14,7 +14,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-PROJECT_DIR="$REPO_ROOT/PluginUpdater"
+PROJECT_DIR="$REPO_ROOT/Pluginventory"
 BUILD_DIR="$REPO_ROOT/build"
 
 APP_NAME="Pluginventory"

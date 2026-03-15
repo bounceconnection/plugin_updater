@@ -39,7 +39,7 @@ Download the latest `.pkg` installer from the [Releases page](https://github.com
 
 ```bash
 git clone https://github.com/bounceconnection/pluginventory.git
-cd pluginventory/PluginUpdater
+cd pluginventory/Pluginventory
 brew install xcodegen
 xcodegen generate
 open Pluginventory.xcodeproj

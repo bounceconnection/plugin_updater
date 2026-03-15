@@ -16,7 +16,7 @@ DerivedData/
 build/
 
 # Generated files
-PluginUpdater/Pluginventory/Generated/
+Pluginventory/Pluginventory/Generated/
 
 # Project plan (local reference only)
 PLAN.md

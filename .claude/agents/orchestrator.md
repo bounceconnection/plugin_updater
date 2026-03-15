@@ -11,7 +11,7 @@ You are the orchestrator for the Pluginventory project. You coordinate multi-age
 ## Project Context
 
 - **What**: Native macOS SwiftUI app for managing audio plugin updates (VST3, AU, CLAP)
-- **Build**: SPM at `PluginUpdater/` — `swift build` / `swift test`
+- **Build**: SPM at `Pluginventory/` — `swift build` / `swift test`
 - **Xcode**: `project.yml` + xcodegen → `Pluginventory.xcodeproj`
 - **Plan**: See `/Users/tomioueda/.klaude-config/plans/iterative-scribbling-oasis.md`
 
@@ -118,7 +118,7 @@ When delegating multi-step work, prefer **sequential waves** over one giant task
 
 After all teammates finish:
 
-1. `cd PluginUpdater && swift build` — must succeed
+1. `cd Pluginventory && swift build` — must succeed
 2. `swift test` — all tests must pass
 3. `xcodegen generate` — if any files were added/removed
 4. `swiftlint lint --config ../.swiftlint.yml` — no new violations

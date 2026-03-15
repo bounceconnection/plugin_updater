@@ -66,7 +66,7 @@ Use exactly these categories (omit empty ones):
 ### Step 1: Find version boundaries
 
 ```bash
-cd ~/plugin_updater
+cd ~/pluginventory
 git tag --sort=-v:refname | head -10      # List recent tags
 git log --oneline v1.0.0..HEAD            # Changes since last tag
 git log --oneline v0.9.0..v1.0.0          # Changes between two tags
@@ -95,7 +95,7 @@ Follow semver based on the changes:
 
 ### Step 4: Write or update CHANGELOG.md
 
-The changelog lives at `~/plugin_updater/CHANGELOG.md` (repo root).
+The changelog lives at `~/pluginventory/CHANGELOG.md` (repo root).
 
 When updating:
 - Add the new version section below `[Unreleased]`

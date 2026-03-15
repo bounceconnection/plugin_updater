@@ -100,7 +100,7 @@ Mirror the source structure — `Services/PluginScanner.swift` gets tested in
 Run `xcodegen generate` to include new test files in the Xcode project:
 
 ```bash
-cd ~/plugin_updater/PluginUpdater && xcodegen generate
+cd ~/pluginventory/Pluginventory && xcodegen generate
 ```
 
 ## Mocking Strategy
@@ -218,7 +218,7 @@ struct MockVersionChecker: VersionChecking {
 
 ```bash
 # Via xcodebuild (preferred in this environment)
-cd ~/plugin_updater/PluginUpdater
+cd ~/pluginventory/Pluginventory
 xcodebuild test -project Pluginventory.xcodeproj -scheme Pluginventory -destination 'platform=macOS'
 
 # Or use the xcodebuild MCP tool
