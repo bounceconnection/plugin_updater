@@ -171,6 +171,24 @@ Follow [Semantic Versioning](https://semver.org/):
 - **Minor** (`1.2.4` → `1.3.0`) — new features, backward-compatible
 - **Major** (`1.3.0` → `2.0.0`) — breaking changes
 
+## Troubleshooting
+
+### Debug Logging
+
+By default, project scans produce minimal log output. To enable verbose per-plugin matching logs for troubleshooting:
+
+```bash
+defaults write com.tomioueda.PluginUpdater debugVerboseLogging -bool YES
+```
+
+Then re-run the scan. Logs are written to `~/Library/Logs/PluginUpdater/` (daily rolling files, kept for 7 days).
+
+To disable verbose logging:
+
+```bash
+defaults delete com.tomioueda.PluginUpdater debugVerboseLogging
+```
+
 ## License
 
 This project is licensed under the [GNU General Public License v3.0](LICENSE).

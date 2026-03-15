@@ -6,10 +6,26 @@ import OSLog
 final class AppLogger {
     static let shared = AppLogger()
 
+    /// When true, per-plugin matching details are logged. Off by default.
+    /// Toggle via `defaults write com.tomioueda.PluginUpdater debugVerboseLogging -bool YES`
+    var verbose: Bool = false
+
     private let osLog = Logger(subsystem: "com.tomioueda.PluginUpdater", category: "app")
     private let queue = DispatchQueue(label: "com.tomioueda.PluginUpdater.logger", qos: .utility)
     private var fileHandle: FileHandle?
     private var currentLogDate: String = ""
+
+    private static let dayFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        return f
+    }()
+
+    private static let timestampFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd HH:mm:ss.SSS"
+        return f
+    }()
 
     let logsDirectoryURL: URL = {
         let base = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask)[0]
@@ -71,7 +87,7 @@ final class AppLogger {
     }
 
     private func openFileForToday() {
-        let dateString = todayString()
+        let dateString = Self.dayFormatter.string(from: Date())
         guard dateString != currentLogDate else { return }
 
         fileHandle?.closeFile()
@@ -88,26 +104,14 @@ final class AppLogger {
     }
 
     private func writeToFile(_ message: String, level: String, category: String) {
-        let dateString = todayString()
+        let dateString = Self.dayFormatter.string(from: Date())
         if dateString != currentLogDate {
             openFileForToday()
         }
 
-        let timestamp = timestampString()
+        let timestamp = Self.timestampFormatter.string(from: Date())
         let line = "[\(timestamp)] [\(level)] [\(category)] \(message)\n"
         guard let data = line.data(using: .utf8) else { return }
         fileHandle?.write(data)
-    }
-
-    private func todayString() -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        return formatter.string(from: Date())
-    }
-
-    private func timestampString() -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSS"
-        return formatter.string(from: Date())
     }
 }

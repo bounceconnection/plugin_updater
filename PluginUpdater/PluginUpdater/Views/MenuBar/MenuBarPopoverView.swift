@@ -89,7 +89,11 @@ struct MenuBarPopoverView: View {
             }
 
             Button("Open Logs Folder") {
-                NSWorkspace.shared.open(AppLogger.shared.logsDirectoryURL)
+                let url = AppLogger.shared.logsDirectoryURL
+                NSWorkspace.shared.open(
+                    url,
+                    configuration: NSWorkspace.OpenConfiguration()
+                ) { _, _ in }
             }
             .buttonStyle(.plain)
             .font(.caption)

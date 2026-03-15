@@ -13,9 +13,15 @@ final class AppState {
     var manifestEntries: [String: UpdateManifestEntry] = [:]
     var updatesAvailableCount = 0
     var availableAppUpdate: AppUpdateChecker.AppUpdate?
+    var isProjectScanning = false
+    var projectScanProgress: Double = 0
+    var projectScanStatusText: String = ""
+    var totalProjectCount = 0
+    var projectsWithMissingPlugins = 0
 
     private(set) var modelContainer: ModelContainer
     private var fileMonitor: FileSystemMonitor?
+    private var projectFileMonitor: FileSystemMonitor?
     private var autoScanTimer: Timer?
     private var isScanInProgress = false
     private let manifestManager = ManifestManager()
@@ -433,6 +439,139 @@ final class AppState {
                 }
             }
         }
+    }
+
+    // MARK: - Project Scanning
+
+    func performProjectScan() async {
+        guard !isProjectScanning else { return }
+        isProjectScanning = true
+        projectScanProgress = 0
+        projectScanStatusText = "Discovering projects..."
+
+        // Set verbose logging from UserDefaults
+        AppLogger.shared.verbose = UserDefaults.standard.bool(forKey: Constants.UserDefaultsKeys.debugVerboseLogging)
+
+        do {
+            let directories = projectScanDirectories()
+            guard !directories.isEmpty else {
+                isProjectScanning = false
+                projectScanStatusText = ""
+                return
+            }
+
+            let scanStart = Date()
+
+            AppLogger.shared.info(
+                "Project scan started — \(directories.count) directories",
+                category: "scan"
+            )
+
+            let scanner = AbletonProjectScanner()
+            let reconciler = ProjectReconciler(modelContainer: modelContainer)
+            let stream = await scanner.scanStreaming(directories: directories)
+            var allScannedPaths: Set<String> = []
+            var errorCount = 0
+
+            for await event in stream {
+                switch event {
+                case .progress(let progress):
+                    switch progress {
+                    case .discovering(let dir):
+                        projectScanStatusText = "Scanning \(dir)..."
+                        projectScanProgress = 0.1
+                    case .parsing(let current, let total, let name):
+                        projectScanStatusText = "Parsing \(name) (\(current)/\(total))"
+                        projectScanProgress = 0.1 + 0.7 * Double(current) / Double(max(total, 1))
+                    }
+
+                case .batch(let projects):
+                    allScannedPaths.formUnion(projects.map(\.filePath))
+                    _ = try await reconciler.reconcile(parsedProjects: projects, fullScan: false)
+
+                case .error:
+                    errorCount += 1
+
+                case .completed(let duration):
+                    AppLogger.shared.info(
+                        "Project parsing complete in \(String(format: "%.1f", duration))s",
+                        category: "scan"
+                    )
+                }
+            }
+
+            // Final removal sweep — mark projects not seen in this scan
+            projectScanStatusText = "Cleaning up..."
+            projectScanProgress = 0.85
+            let removedCount = try await reconciler.markMissingProjects(scannedPaths: allScannedPaths)
+            if removedCount > 0 {
+                AppLogger.shared.info(
+                    "Marked \(removedCount) missing projects as removed",
+                    category: "scan"
+                )
+            }
+
+            projectScanProgress = 0.95
+
+            let countDescriptor = FetchDescriptor<AbletonProject>(
+                predicate: #Predicate { !$0.isRemoved }
+            )
+            totalProjectCount = (try? modelContainer.mainContext.fetchCount(countDescriptor)) ?? 0
+
+            let allProjects = try? modelContainer.mainContext.fetch(
+                FetchDescriptor<AbletonProject>(
+                    predicate: #Predicate { !$0.isRemoved }
+                )
+            )
+            projectsWithMissingPlugins = allProjects?
+                .filter { $0.missingPluginCount > 0 }.count ?? 0
+
+            projectScanProgress = 1.0
+
+            let totalDuration = Date().timeIntervalSince(scanStart)
+            AppLogger.shared.info(
+                "Project scan complete — \(totalProjectCount) projects, \(errorCount) errors in \(String(format: "%.1f", totalDuration))s",
+                category: "scan"
+            )
+        } catch {
+            AppLogger.shared.error(
+                "Project scan failed: \(error.localizedDescription)",
+                category: "scan"
+            )
+        }
+
+        projectScanStatusText = ""
+        isProjectScanning = false
+    }
+
+    func projectScanDirectories() -> [URL] {
+        let saved = UserDefaults.standard.stringArray(
+            forKey: Constants.UserDefaultsKeys.projectScanDirectories
+        )
+        let paths = saved ?? Constants.defaultProjectScanDirectories
+        return paths.map { URL(fileURLWithPath: $0) }
+    }
+
+    func startProjectMonitoring() {
+        guard UserDefaults.standard.bool(
+            forKey: Constants.UserDefaultsKeys.monitorProjectDirectories
+        ) else { return }
+
+        projectFileMonitor?.stopMonitoring()
+        let monitor = FileSystemMonitor()
+        monitor.onDirectoriesChanged = { [weak self] _ in
+            guard let self else { return }
+            Task { @MainActor in
+                await self.performProjectScan()
+            }
+        }
+        monitor.startMonitoring(directories: projectScanDirectories())
+        projectFileMonitor = monitor
+    }
+
+    func stopProjectMonitoring() {
+        projectFileMonitor?.stopMonitoring()
+        projectFileMonitor = nil
     }
 
     // MARK: - Private

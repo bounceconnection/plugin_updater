@@ -64,7 +64,11 @@ struct PluginUpdaterApp: App {
 
             CommandGroup(before: .help) {
                 Button("Open Logs Folder") {
-                    NSWorkspace.shared.open(AppLogger.shared.logsDirectoryURL)
+                    let url = AppLogger.shared.logsDirectoryURL
+                    NSWorkspace.shared.open(
+                        url,
+                        configuration: NSWorkspace.OpenConfiguration()
+                    ) { _, _ in }
                 }
                 Divider()
             }
@@ -122,5 +126,11 @@ struct PluginUpdaterApp: App {
 
         // Start auto-scan timer
         appState.startAutoScanTimer()
+
+        // Scan Ableton projects if enabled
+        if UserDefaults.standard.bool(forKey: Constants.UserDefaultsKeys.scanProjectsOnLaunch) {
+            await appState.performProjectScan()
+        }
+        appState.startProjectMonitoring()
     }
 }

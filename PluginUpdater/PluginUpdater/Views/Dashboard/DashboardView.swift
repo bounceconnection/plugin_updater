@@ -7,6 +7,10 @@ enum SidebarFilter: Hashable {
     case format(PluginFormat)
     case updatesAvailable
     case hidden
+    case allProjects
+    case projectsMissingPlugins
+    case usedPlugins
+    case unusedPlugins
 }
 
 /// Wraps a Plugin with its computed update status so the Table can sort all columns.
@@ -45,6 +49,10 @@ private struct SidebarCounts {
     var hidden = 0
     var updates = 0
     var formatCounts: [PluginFormat: Int] = [:]
+    var totalProjects = 0
+    var projectsMissingPlugins = 0
+    var usedPlugins = 0
+    var unusedPlugins = 0
 
     func count(for format: PluginFormat) -> Int { formatCounts[format, default: 0] }
 }
@@ -54,6 +62,8 @@ struct DashboardView: View {
     @Environment(AppState.self) private var appState
     @Environment(\.modelContext) private var modelContext
     @Query(filter: #Predicate<Plugin> { !$0.isRemoved }) private var plugins: [Plugin]
+    @Query(filter: #Predicate<AbletonProject> { !$0.isRemoved })
+    private var abletonProjects: [AbletonProject]
     @State private var sidebarSelection: SidebarFilter = .all
     @State private var searchText = ""
     @State private var debouncedSearchText = ""
@@ -61,6 +71,7 @@ struct DashboardView: View {
     @State private var sortOrder = [KeyPathComparator(\PluginRow.name)]
     @State private var selectedPluginIDs: Set<PersistentIdentifier> = []
     @State private var showInspector = false
+    @State private var selectedProjectForDetail: AbletonProject?
 
     // MARK: - Computed helpers
 
@@ -80,6 +91,26 @@ struct DashboardView: View {
                 }
             }
         }
+
+        // Project counts
+        c.totalProjects = abletonProjects.count
+        var usedPluginNames: Set<String> = []
+        for project in abletonProjects {
+            if project.missingPluginCount > 0 {
+                c.projectsMissingPlugins += 1
+            }
+            for pp in project.plugins where pp.isInstalled {
+                usedPluginNames.insert(pp.pluginName.lowercased())
+            }
+        }
+        for plugin in plugins where !plugin.isHidden && !plugin.isRemoved {
+            if usedPluginNames.contains(plugin.name.lowercased()) {
+                c.usedPlugins += 1
+            } else {
+                c.unusedPlugins += 1
+            }
+        }
+
         return c
     }
 
@@ -103,6 +134,14 @@ struct DashboardView: View {
                     return entry.latestVersion.isNewerVersion(than: plugin.currentVersion)
                 }
             case .hidden:
+                break
+            case .usedPlugins:
+                let usedNames = collectUsedPluginNames()
+                result = result.filter { usedNames.contains($0.name.lowercased()) }
+            case .unusedPlugins:
+                let usedNames = collectUsedPluginNames()
+                result = result.filter { !usedNames.contains($0.name.lowercased()) }
+            case .allProjects, .projectsMissingPlugins:
                 break
             }
         }
@@ -210,6 +249,16 @@ struct DashboardView: View {
         try? modelContext.save()
     }
 
+    private func collectUsedPluginNames() -> Set<String> {
+        var names: Set<String> = []
+        for project in abletonProjects {
+            for pp in project.plugins where pp.isInstalled {
+                names.insert(pp.pluginName.lowercased())
+            }
+        }
+        return names
+    }
+
     // MARK: - Body
 
     var body: some View {
@@ -237,6 +286,26 @@ struct DashboardView: View {
                     Label("Hidden (\(counts.hidden))", systemImage: "eye.slash")
                         .tag(SidebarFilter.hidden)
                 }
+                if counts.totalProjects > 0 || appState.isProjectScanning || !appState.projectScanDirectories().isEmpty {
+                    Section("Projects") {
+                        Label("All Projects (\(counts.totalProjects))", systemImage: "doc.text")
+                            .tag(SidebarFilter.allProjects)
+                        if counts.projectsMissingPlugins > 0 {
+                            Label(
+                                "Missing Plugins (\(counts.projectsMissingPlugins))",
+                                systemImage: "exclamationmark.triangle"
+                            )
+                            .tag(SidebarFilter.projectsMissingPlugins)
+                            .foregroundStyle(.red)
+                        }
+                    }
+                    Section("Usage") {
+                        Label("Used (\(counts.usedPlugins))", systemImage: "checkmark.circle")
+                            .tag(SidebarFilter.usedPlugins)
+                        Label("Unused (\(counts.unusedPlugins))", systemImage: "circle.dashed")
+                            .tag(SidebarFilter.unusedPlugins)
+                    }
+                }
             }
             .navigationTitle("Plugins")
             .safeAreaInset(edge: .bottom) {
@@ -247,180 +316,245 @@ struct DashboardView: View {
                     .padding(16)
             }
         } detail: {
-            Table(rows, selection: $selectedPluginIDs, sortOrder: $sortOrder) {
-                TableColumn("Name", value: \PluginRow.name) { (row: PluginRow) in
-                    Text(row.name)
-                }
-                TableColumn("Vendor", value: \PluginRow.vendorName) { (row: PluginRow) in
-                    Text(row.vendorName)
-                }
-                TableColumn("Format", value: \PluginRow.formatRawValue) { (row: PluginRow) in
-                    PluginFormatBadge(format: row.plugin.format)
-                }
-                .width(min: 50, ideal: 60, max: 80)
-                TableColumn("Installed", value: \PluginRow.currentVersion) { (row: PluginRow) in
-                    Text(row.currentVersion)
-                        .monospacedDigit()
-                }
-                .width(min: 60, ideal: 80, max: 120)
-                TableColumn("Available", value: \PluginRow.updatePriority) { (row: PluginRow) in
-                    AvailableVersionCell(
-                        availableVersion: row.availableVersion,
-                        hasUpdate: row.hasUpdate
-                    )
-                }
-                .width(min: 60, ideal: 80, max: 120)
-                TableColumn("Download", value: \PluginRow.hasDownload) { (row: PluginRow) in
-                    if let urlString = row.downloadURL, let url = URL(string: urlString) {
-                        Link(destination: url) {
-                            Label("Get", systemImage: "arrow.down.circle")
-                                .labelStyle(.titleAndIcon)
-                        }
-                        .buttonStyle(.borderless)
-                    }
-                }
-                .width(min: 50, ideal: 70, max: 90)
-                TableColumn("Architecture", value: \PluginRow.architectureDisplay) { (row: PluginRow) in
-                    HStack(spacing: 4) {
-                        Text(row.architectureDisplay)
-                        if row.plugin.isLegacyArchitecture {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundStyle(.yellow)
-                                .help("Legacy architecture — may not run natively")
-                        }
-                    }
-                }
-                .width(min: 80, ideal: 100, max: 140)
-                TableColumn("Size", value: \PluginRow.fileSize) { (row: PluginRow) in
-                    Text(row.fileSizeDisplay)
-                        .monospacedDigit()
-                }
-                .width(min: 50, ideal: 65, max: 90)
-                TableColumn("Date Added", value: \PluginRow.dateAdded) { (row: PluginRow) in
-                    Text(row.dateAdded.formatted(.dateTime.month(.abbreviated).day().year()))
-                }
-                .width(min: 80, ideal: 100, max: 130)
-            }
-            .background(NSTableViewFinder.enableColumnAutoResize())
-            // Force SwiftUI to recreate the Table entirely when the filter
-            // changes, instead of diffing hundreds of row insertions/removals
-            // which causes a multi-second hang on the main thread.
-            .id(sidebarSelection)
-            .contextMenu(forSelectionType: PersistentIdentifier.self) { ids in
-                if !ids.isEmpty {
-                    let count = ids.count
-                    Button("Copy Path\(count > 1 ? "s" : "")") {
-                        copyPaths(for: ids)
-                    }
-                    Button("Copy Full Details") {
-                        copyFullDetails(for: ids, manifest: manifest)
-                    }
-
-                    Divider()
-
-                    Button("Reveal in Finder") {
-                        revealInFinder(ids: ids)
-                    }
-                    Button("Open Publisher Website") {
-                        openVendorWebsites(for: ids, manifest: manifest)
-                    }
-
-                    Divider()
-
-                    if sidebarSelection == .hidden {
-                        Button("Unhide\(count > 1 ? " \(count) Plugins" : " Plugin")") {
-                            setHidden(false, for: ids)
-                        }
-                    } else {
-                        Button("Hide\(count > 1 ? " \(count) Plugins" : " Plugin")") {
-                            setHidden(true, for: ids)
-                        }
-                    }
-                }
-            }
-            .overlay {
-                if plugins.isEmpty && !appState.isScanning {
-                    ContentUnavailableView("No Plugins Found", systemImage: "puzzlepiece.extension", description: Text("Run a scan to discover your audio plugins."))
-                } else if rows.isEmpty && !debouncedSearchText.isEmpty {
-                    ContentUnavailableView.search(text: debouncedSearchText)
-                } else if rows.isEmpty && sidebarSelection == .hidden {
-                    ContentUnavailableView("No Hidden Plugins", systemImage: "eye.slash", description: Text("Right-click a plugin and choose Hide to hide it here."))
-                }
-            }
-            .safeAreaInset(edge: .bottom) {
-                HStack {
-                    Text(statusBarText(rowCount: rows.count))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(.bar)
-            }
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    if appState.isScanning {
-                        ProgressView(value: appState.scanProgress)
-                            .progressViewStyle(.circular)
-                            .controlSize(.regular)
-                    } else {
-                        Button {
-                            Task { await appState.performScan() }
-                        } label: {
-                            HStack(spacing: 6) {
-                                Text(statusSubtitle)
-                                    .font(.caption)
-                                Image(systemName: "arrow.clockwise")
-                            }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                        }
-                    }
-                }
-                ToolbarItem(placement: .primaryAction) {
-                    HStack(spacing: 8) {
-                        TextField("Search plugins or vendors", text: $searchText)
-                            .textFieldStyle(.roundedBorder)
-                            .frame(minWidth: 180, idealWidth: 250)
-                        Button {
-                            showInspector.toggle()
-                        } label: {
-                            Label("Info", systemImage: "sidebar.trailing")
-                        }
-                        .labelStyle(.titleAndIcon)
-                    }
-                }
-            }
-            .inspector(isPresented: $showInspector) {
-                if let plugin = selectedPlugin {
-                    PluginDetailView(plugin: plugin, manifest: appState.manifestEntries)
-                        .inspectorColumnWidth(min: 280, ideal: 320, max: 400)
-                } else {
-                    ContentUnavailableView("No Selection", systemImage: "cursorarrow.click", description: Text("Select a plugin to view its details."))
-                        .inspectorColumnWidth(min: 280, ideal: 320, max: 400)
-                }
-            }
-            .onChange(of: searchText) { _, newValue in
-                searchTask?.cancel()
-                if newValue.isEmpty {
-                    // Clear immediately — no point debouncing an empty string
-                    debouncedSearchText = ""
-                } else {
-                    searchTask = Task {
-                        try? await Task.sleep(nanoseconds: 300_000_000)
-                        if !Task.isCancelled {
-                            debouncedSearchText = newValue
-                        }
-                    }
-                }
-            }
-            .onChange(of: selectedPluginIDs) { _, newValue in
-                if !newValue.isEmpty {
-                    showInspector = true
-                }
+            switch sidebarSelection {
+            case .allProjects:
+                projectListDetail(projects: abletonProjects)
+            case .projectsMissingPlugins:
+                projectListDetail(
+                    projects: abletonProjects.filter { $0.missingPluginCount > 0 }
+                )
+            default:
+                pluginTableDetail(rows: rows, manifest: manifest)
             }
         }
         .frame(minWidth: 700, minHeight: 400)
+    }
+
+    // MARK: - Project Detail
+
+    @ViewBuilder
+    private func projectListDetail(projects: [AbletonProject]) -> some View {
+        ProjectListView(
+            projects: projects,
+            searchText: searchText,
+            onSelectProject: { selectedProjectForDetail = $0 }
+        )
+        .safeAreaInset(edge: .top) {
+            if appState.isProjectScanning {
+                ProgressView(value: appState.projectScanProgress)
+                    .progressViewStyle(.linear)
+            }
+        }
+        .sheet(item: $selectedProjectForDetail) { project in
+            ProjectDetailView(project: project)
+                .frame(minWidth: 500, minHeight: 400)
+        }
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                if appState.isProjectScanning {
+                    HStack(spacing: 6) {
+                        ProgressView()
+                            .controlSize(.small)
+                        Text(appState.projectScanStatusText.isEmpty ? "Scanning..." : appState.projectScanStatusText)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                } else {
+                    Button {
+                        Task { await appState.performProjectScan() }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Text("Scan Projects")
+                                .font(.caption)
+                            Image(systemName: "arrow.clockwise")
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                    }
+                }
+            }
+            ToolbarItem(placement: .primaryAction) {
+                HStack(spacing: 8) {
+                    TextField("Search projects", text: $searchText)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(minWidth: 180, idealWidth: 250)
+                }
+            }
+        }
+    }
+
+    // MARK: - Plugin Table Detail
+
+    @ViewBuilder
+    private func pluginTableDetail(rows: [PluginRow], manifest: [String: UpdateManifestEntry]) -> some View {
+        Table(rows, selection: $selectedPluginIDs, sortOrder: $sortOrder) {
+            TableColumn("Name", value: \PluginRow.name) { (row: PluginRow) in
+                Text(row.name)
+            }
+            TableColumn("Vendor", value: \PluginRow.vendorName) { (row: PluginRow) in
+                Text(row.vendorName)
+            }
+            TableColumn("Format", value: \PluginRow.formatRawValue) { (row: PluginRow) in
+                PluginFormatBadge(format: row.plugin.format)
+            }
+            .width(min: 50, ideal: 60, max: 80)
+            TableColumn("Installed", value: \PluginRow.currentVersion) { (row: PluginRow) in
+                Text(row.currentVersion)
+                    .monospacedDigit()
+            }
+            .width(min: 60, ideal: 80, max: 120)
+            TableColumn("Available", value: \PluginRow.updatePriority) { (row: PluginRow) in
+                AvailableVersionCell(
+                    availableVersion: row.availableVersion,
+                    hasUpdate: row.hasUpdate
+                )
+            }
+            .width(min: 60, ideal: 80, max: 120)
+            TableColumn("Download", value: \PluginRow.hasDownload) { (row: PluginRow) in
+                if let urlString = row.downloadURL, let url = URL(string: urlString) {
+                    Link(destination: url) {
+                        Label("Get", systemImage: "arrow.down.circle")
+                            .labelStyle(.titleAndIcon)
+                    }
+                    .buttonStyle(.borderless)
+                }
+            }
+            .width(min: 50, ideal: 70, max: 90)
+            TableColumn("Architecture", value: \PluginRow.architectureDisplay) { (row: PluginRow) in
+                HStack(spacing: 4) {
+                    Text(row.architectureDisplay)
+                    if row.plugin.isLegacyArchitecture {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.yellow)
+                            .help("Legacy architecture — may not run natively")
+                    }
+                }
+            }
+            .width(min: 80, ideal: 100, max: 140)
+            TableColumn("Size", value: \PluginRow.fileSize) { (row: PluginRow) in
+                Text(row.fileSizeDisplay)
+                    .monospacedDigit()
+            }
+            .width(min: 50, ideal: 65, max: 90)
+            TableColumn("Date Added", value: \PluginRow.dateAdded) { (row: PluginRow) in
+                Text(row.dateAdded.formatted(.dateTime.month(.abbreviated).day().year()))
+            }
+            .width(min: 80, ideal: 100, max: 130)
+        }
+        .background(NSTableViewFinder.enableColumnAutoResize())
+        .id(sidebarSelection)
+        .contextMenu(forSelectionType: PersistentIdentifier.self) { ids in
+            if !ids.isEmpty {
+                let count = ids.count
+                Button("Copy Path\(count > 1 ? "s" : "")") {
+                    copyPaths(for: ids)
+                }
+                Button("Copy Full Details") {
+                    copyFullDetails(for: ids, manifest: manifest)
+                }
+
+                Divider()
+
+                Button("Reveal in Finder") {
+                    revealInFinder(ids: ids)
+                }
+                Button("Open Publisher Website") {
+                    openVendorWebsites(for: ids, manifest: manifest)
+                }
+
+                Divider()
+
+                if sidebarSelection == .hidden {
+                    Button("Unhide\(count > 1 ? " \(count) Plugins" : " Plugin")") {
+                        setHidden(false, for: ids)
+                    }
+                } else {
+                    Button("Hide\(count > 1 ? " \(count) Plugins" : " Plugin")") {
+                        setHidden(true, for: ids)
+                    }
+                }
+            }
+        }
+        .overlay {
+            if plugins.isEmpty && !appState.isScanning {
+                ContentUnavailableView("No Plugins Found", systemImage: "puzzlepiece.extension", description: Text("Run a scan to discover your audio plugins."))
+            } else if rows.isEmpty && !debouncedSearchText.isEmpty {
+                ContentUnavailableView.search(text: debouncedSearchText)
+            } else if rows.isEmpty && sidebarSelection == .hidden {
+                ContentUnavailableView("No Hidden Plugins", systemImage: "eye.slash", description: Text("Right-click a plugin and choose Hide to hide it here."))
+            }
+        }
+        .safeAreaInset(edge: .bottom) {
+            HStack {
+                Text(statusBarText(rowCount: rows.count))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Spacer()
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(.bar)
+        }
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                if appState.isScanning {
+                    ProgressView(value: appState.scanProgress)
+                        .progressViewStyle(.circular)
+                        .controlSize(.regular)
+                } else {
+                    Button {
+                        Task { await appState.performScan() }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Text(statusSubtitle)
+                                .font(.caption)
+                            Image(systemName: "arrow.clockwise")
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                    }
+                }
+            }
+            ToolbarItem(placement: .primaryAction) {
+                HStack(spacing: 8) {
+                    TextField("Search plugins or vendors", text: $searchText)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(minWidth: 180, idealWidth: 250)
+                    Button {
+                        showInspector.toggle()
+                    } label: {
+                        Label("Info", systemImage: "sidebar.trailing")
+                    }
+                    .labelStyle(.titleAndIcon)
+                }
+            }
+        }
+        .inspector(isPresented: $showInspector) {
+            if let plugin = selectedPlugin {
+                PluginDetailView(plugin: plugin, manifest: appState.manifestEntries)
+                    .inspectorColumnWidth(min: 280, ideal: 320, max: 400)
+            } else {
+                ContentUnavailableView("No Selection", systemImage: "cursorarrow.click", description: Text("Select a plugin to view its details."))
+                    .inspectorColumnWidth(min: 280, ideal: 320, max: 400)
+            }
+        }
+        .onChange(of: searchText) { _, newValue in
+            searchTask?.cancel()
+            if newValue.isEmpty {
+                debouncedSearchText = ""
+            } else {
+                searchTask = Task {
+                    try? await Task.sleep(nanoseconds: 300_000_000)
+                    if !Task.isCancelled {
+                        debouncedSearchText = newValue
+                    }
+                }
+            }
+        }
+        .onChange(of: selectedPluginIDs) { _, newValue in
+            if !newValue.isEmpty {
+                showInspector = true
+            }
+        }
     }
 }
